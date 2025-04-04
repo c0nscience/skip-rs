@@ -1,10 +1,12 @@
 use anyhow::Context;
 use askama::Template;
+// use sqlx::postgres::PgPoolOptions;
+use tower_http::services::{ServeDir, ServeFile};
 
 use askama_axum::IntoResponse;
+use axum::Router;
 use axum::http::StatusCode;
 use axum::routing::get;
-use axum::Router;
 
 use std::net::SocketAddr;
 use tower_http::compression::CompressionLayer;
@@ -17,9 +19,20 @@ async fn main() -> anyhow::Result<()> {
 
     let port = dotenvy::var("PORT").map_or_else(|_| Ok(3000), |p| p.parse::<u16>())?;
 
+    // let db = PgPoolOptions::new()
+    //     .max_connections(20)
+    //     .acquire_timeout(std::time::Duration::from_secs(3))
+    //     .connect(&database_url)
+    //     .await
+    //     .context("could not connect to database")?;
+    // sqlx::migrate!().run(&db).await?;
+
     let app = Router::new()
         .route("/", get(index))
         .route("/health", get(health))
+        .layer(CompressionLayer::new())
+        .nest_service("/favicon.ico", ServeFile::new("assets/favicon.ico"))
+        .nest_service("/assets", ServeDir::new("assets"))
         .layer(CompressionLayer::new());
     // .with_state(state.clone());
 

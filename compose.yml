@@ -1,0 +1,11 @@
+name: 'skip-rs'
+
+services:
+  db:
+    container_name: db
+    image: postgres:17.4
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: rust
+    ports:
+      - "5434:5432"
