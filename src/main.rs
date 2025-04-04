@@ -1,5 +1,8 @@
 use anyhow::Context;
 use askama::Template;
+use rspotify::model::{AlbumId, Market};
+use rspotify::prelude::BaseClient;
+use rspotify::{ClientCredsSpotify, Credentials};
 // use sqlx::postgres::PgPoolOptions;
 use tower_http::services::{ServeDir, ServeFile};
 
@@ -19,6 +22,22 @@ async fn main() -> anyhow::Result<()> {
 
     let port = dotenvy::var("PORT").map_or_else(|_| Ok(3000), |p| p.parse::<u16>())?;
 
+    let creds = Credentials::from_env().context("no spotify credentials found.")?;
+
+    let spotify = ClientCredsSpotify::new(creds);
+    // I guess I have to call this once ... after that the token should be refreshed
+    spotify.request_token().await?;
+
+    // we have to extract the spotify id from the given url ... the whole api seems to run on the
+    // ids only
+    let uri = AlbumId::from_id("1pV9ZitMywO46h4igOPD2X")?;
+    let albums = spotify
+        .album(
+            uri,
+            Some(Market::Country(rspotify::model::Country::Germany)),
+        )
+        .await?;
+    println!("Response: {}", albums.name);
     // let db = PgPoolOptions::new()
     //     .max_connections(20)
     //     .acquire_timeout(std::time::Duration::from_secs(3))

@@ -19,6 +19,7 @@ axum-macros = "0.4.2"
 chrono = "0.4.39"
 chrono-tz = "0.10.0"
 dotenvy = "0.15.7"
+rspotify = { version = "0.14.0", features = ["env-file"]}
 sqlx = { version = "0.8.2", features = ["runtime-tokio", "tls-native-tls", "any", "postgres", "chrono"] }
 thiserror = "2.0.9"
 tokio = { version = "1.42.0", features = ["macros", "rt-multi-thread"] }
