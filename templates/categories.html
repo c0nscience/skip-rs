@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+
+{% block title %}RSKiP{% endblock %}
+
+{% block content %}
+<ul>
+	{% for category in categories %}
+	<li><a href="/{{ category_type }}/categories/{{ category.id }}/entries">{{ category.name }}</a></li>
+	{% endfor %}
+</ul>
+{% endblock %}

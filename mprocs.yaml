@@ -5,6 +5,6 @@ procs:
     shell: "npm run prd"
     autostart: false
   sqlx:
-    shell: "cargo sqlx prepare"
+    shell: "RUST_LOG=sqlx=debug cargo sqlx prepare"
     autostart: false
 
