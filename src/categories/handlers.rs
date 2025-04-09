@@ -26,3 +26,33 @@ pub async fn list(
         categories,
     })
 }
+
+pub async fn admin_list() -> Result<impl IntoResponse, errors::AppError> {
+    todo!();
+    Ok(())
+}
+
+pub async fn admin_new() -> Result<impl IntoResponse, errors::AppError> {
+    todo!();
+    Ok(())
+}
+
+pub async fn admin_create() -> Result<impl IntoResponse, errors::AppError> {
+    todo!();
+    Ok(())
+}
+
+pub async fn admin_get_category() -> Result<impl IntoResponse, errors::AppError> {
+    todo!();
+    Ok(())
+}
+
+pub async fn admin_edit() -> Result<impl IntoResponse, errors::AppError> {
+    todo!();
+    Ok(())
+}
+
+pub async fn admin_delete() -> Result<impl IntoResponse, errors::AppError> {
+    todo!();
+    Ok(())
+}

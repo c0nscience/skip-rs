@@ -9,7 +9,7 @@ use tower_http::services::{ServeDir, ServeFile};
 use askama_axum::IntoResponse;
 use axum::Router;
 use axum::http::StatusCode;
-use axum::routing::get;
+use axum::routing::{get, post};
 
 use std::net::SocketAddr;
 use tower_http::compression::CompressionLayer;
@@ -67,6 +67,28 @@ async fn main() -> anyhow::Result<()> {
         .route(
             "/:category/categories/:category_id/entries/:entry_id",
             get(entries::handlers::get_entry),
+        )
+        .route("/admin/categories", get(categories::handlers::admin_list))
+        .route(
+            "/admin/categories/new",
+            get(categories::handlers::admin_new).post(categories::handlers::admin_create),
+        )
+        .route(
+            "/admin/categories/:category_id",
+            get(categories::handlers::admin_get_category)
+                .put(categories::handlers::admin_edit)
+                .delete(categories::handlers::admin_delete),
+        )
+        .route("/admin/entries", get(entries::handlers::admin_list))
+        .route(
+            "/admin/entries/new",
+            get(entries::handlers::admin_new).post(categories::handlers::admin_create),
+        )
+        .route(
+            "/admin/entries/:entry_id",
+            get(entries::handlers::admin_get_entry)
+                .put(entries::handlers::admin_edit)
+                .delete(entries::handlers::admin_delete),
         )
         .route("/", get(index))
         .route("/health", get(health))

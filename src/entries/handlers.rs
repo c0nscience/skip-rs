@@ -48,3 +48,33 @@ pub async fn get_entry(
         entry_id,
     })
 }
+
+pub async fn admin_list() -> Result<impl IntoResponse, errors::AppError> {
+    todo!();
+    Ok(())
+}
+
+pub async fn admin_new() -> Result<impl IntoResponse, errors::AppError> {
+    todo!();
+    Ok(())
+}
+
+pub async fn admin_create() -> Result<impl IntoResponse, errors::AppError> {
+    todo!();
+    Ok(())
+}
+
+pub async fn admin_get_entry() -> Result<impl IntoResponse, errors::AppError> {
+    todo!();
+    Ok(())
+}
+
+pub async fn admin_edit() -> Result<impl IntoResponse, errors::AppError> {
+    todo!();
+    Ok(())
+}
+
+pub async fn admin_delete() -> Result<impl IntoResponse, errors::AppError> {
+    todo!();
+    Ok(())
+}
