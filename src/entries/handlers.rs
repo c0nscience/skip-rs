@@ -49,9 +49,12 @@ pub async fn get_entry(
     })
 }
 
+#[derive(Template)]
+#[template(path = "admin_entries.html")]
+struct ListTemplate {}
+
 pub async fn admin_list() -> Result<impl IntoResponse, errors::AppError> {
-    todo!();
-    Ok(())
+    Ok(ListTemplate {})
 }
 
 pub async fn admin_new() -> Result<impl IntoResponse, errors::AppError> {

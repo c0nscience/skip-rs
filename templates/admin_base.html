@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block title %}RSKiP{% endblock %}
+
+{% block content %}
+<div>
+	{% include "admin_mobile_sidebar.html" %}
+	{% include "admin_desktop_sidebar.html" %}
+	<div class="xl:pl-72">
+		{% include "admin_header.html" %}
+
+		<main>
+			<header
+				class="flex items-center justify-between border-b border-white/5 px-4 py-4 sm:px-6 sm:py-6 lg:px-8">
+				<h1 class="text-base/7 font-semibold text-white">{% block headline %}{% endblock %}</h1>
+
+			</header>
+			{% block admin_content %}{% endblock %}
+		</main>
+	</div>
+</div>
+{% endblock %}

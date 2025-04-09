@@ -9,7 +9,7 @@ use tower_http::services::{ServeDir, ServeFile};
 use askama_axum::IntoResponse;
 use axum::Router;
 use axum::http::StatusCode;
-use axum::routing::{get, post};
+use axum::routing::get;
 
 use std::net::SocketAddr;
 use tower_http::compression::CompressionLayer;
@@ -68,6 +68,7 @@ async fn main() -> anyhow::Result<()> {
             "/:category/categories/:category_id/entries/:entry_id",
             get(entries::handlers::get_entry),
         )
+        .route("/admin", get(admin_index))
         .route("/admin/categories", get(categories::handlers::admin_list))
         .route(
             "/admin/categories/new",
@@ -121,4 +122,12 @@ async fn index() -> impl IntoResponse {
 
 async fn health() -> (StatusCode, impl IntoResponse) {
     (StatusCode::OK, "OK")
+}
+
+#[derive(Template)]
+#[template(path = "admin.html")]
+struct AdminIndexTemplate {}
+
+async fn admin_index() -> impl IntoResponse {
+    AdminIndexTemplate {}
 }

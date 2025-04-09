@@ -27,9 +27,12 @@ pub async fn list(
     })
 }
 
+#[derive(Template)]
+#[template(path = "admin_categories.html")]
+struct ListTemplate {}
+
 pub async fn admin_list() -> Result<impl IntoResponse, errors::AppError> {
-    todo!();
-    Ok(())
+    Ok(ListTemplate {})
 }
 
 pub async fn admin_new() -> Result<impl IntoResponse, errors::AppError> {
