@@ -72,7 +72,7 @@ pub async fn admin_get_entry() -> Result<impl IntoResponse, errors::AppError> {
     Ok(())
 }
 
-pub async fn admin_edit() -> Result<impl IntoResponse, errors::AppError> {
+pub async fn admin_update() -> Result<impl IntoResponse, errors::AppError> {
     todo!();
     Ok(())
 }

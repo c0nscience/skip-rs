@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        SELECT \n            id, name, category_type AS \"category_type!: CategoryType\" \n        FROM categories\n        WHERE category_type = ($1::text)::category_type\n        ",
+  "query": "\n        SELECT \n            id, name, image_url, category_type AS \"category_type!: CategoryType\" \n        FROM categories\n        WHERE category_type = ($1::text)::category_type\n        ",
   "describe": {
     "columns": [
       {
@@ -15,6 +15,11 @@
       },
       {
         "ordinal": 2,
+        "name": "image_url",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 3,
         "name": "category_type!: CategoryType",
         "type_info": {
           "Custom": {
@@ -37,8 +42,9 @@
     "nullable": [
       false,
       false,
+      false,
       false
     ]
   },
-  "hash": "a27fab588fa3ad38b1d95c6e03e45ea6b3d4e6c9583746d1abe98b05b409149a"
+  "hash": "80ad05cf5a7412b73263b0e4e0ce0ecd1f3397f02b0e87b070782fa470719642"
 }

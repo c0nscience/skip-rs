@@ -20,7 +20,7 @@ pub async fn list(
     State(state): State<states::AppState>,
 ) -> Result<impl IntoResponse, errors::AppError> {
     let category_type = CategoryType::from_str(&category)?;
-    let categories = super::list_all(&state.db, &category_type).await?;
+    let categories = super::list_all_by_type(&state.db, &category_type).await?;
     Ok(CategoriesTemplate {
         category_type,
         categories,
@@ -29,10 +29,15 @@ pub async fn list(
 
 #[derive(Template)]
 #[template(path = "admin_categories.html")]
-struct ListTemplate {}
+struct ListTemplate {
+    categories: Vec<Category>,
+}
 
-pub async fn admin_list() -> Result<impl IntoResponse, errors::AppError> {
-    Ok(ListTemplate {})
+pub async fn admin_list(
+    State(state): State<states::AppState>,
+) -> Result<impl IntoResponse, errors::AppError> {
+    let categories = super::list_all(&state.db).await?;
+    Ok(ListTemplate { categories })
 }
 
 pub async fn admin_new() -> Result<impl IntoResponse, errors::AppError> {
@@ -45,12 +50,20 @@ pub async fn admin_create() -> Result<impl IntoResponse, errors::AppError> {
     Ok(())
 }
 
-pub async fn admin_get_category() -> Result<impl IntoResponse, errors::AppError> {
-    todo!();
-    Ok(())
+#[derive(Template)]
+#[template(path = "admin_categories_edit.html")]
+struct EditTemplate {
+    category: Category,
+}
+pub async fn admin_get_category(
+    Path(category_id): Path<String>,
+    State(state): State<states::AppState>,
+) -> Result<impl IntoResponse, errors::AppError> {
+    let category = super::get(&state.db, &category_id).await?;
+    Ok(EditTemplate { category })
 }
 
-pub async fn admin_edit() -> Result<impl IntoResponse, errors::AppError> {
+pub async fn admin_update() -> Result<impl IntoResponse, errors::AppError> {
     todo!();
     Ok(())
 }

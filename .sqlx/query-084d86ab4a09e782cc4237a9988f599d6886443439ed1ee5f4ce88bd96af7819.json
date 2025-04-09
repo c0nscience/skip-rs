@@ -1,0 +1,50 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT \n            id, name, image_url, category_type AS \"category_type!: CategoryType\" \n        FROM categories \n        WHERE id = $1\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "name",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 2,
+        "name": "image_url",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 3,
+        "name": "category_type!: CategoryType",
+        "type_info": {
+          "Custom": {
+            "name": "category_type",
+            "kind": {
+              "Enum": [
+                "music",
+                "audiobook"
+              ]
+            }
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "084d86ab4a09e782cc4237a9988f599d6886443439ed1ee5f4ce88bd96af7819"
+}

@@ -77,7 +77,7 @@ async fn main() -> anyhow::Result<()> {
         .route(
             "/admin/categories/:category_id",
             get(categories::handlers::admin_get_category)
-                .put(categories::handlers::admin_edit)
+                .put(categories::handlers::admin_update)
                 .delete(categories::handlers::admin_delete),
         )
         .route("/admin/entries", get(entries::handlers::admin_list))
@@ -88,7 +88,7 @@ async fn main() -> anyhow::Result<()> {
         .route(
             "/admin/entries/:entry_id",
             get(entries::handlers::admin_get_entry)
-                .put(entries::handlers::admin_edit)
+                .put(entries::handlers::admin_update)
                 .delete(entries::handlers::admin_delete),
         )
         .route("/", get(index))
