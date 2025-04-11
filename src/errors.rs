@@ -1,4 +1,5 @@
 use axum::http::StatusCode;
+use axum::http::header::InvalidHeaderValue;
 use axum::response::{IntoResponse, Response};
 use axum_extra::extract::multipart;
 use thiserror::Error;
@@ -15,16 +16,12 @@ pub enum AppError {
     #[error("{0}")]
     MultipartError(#[from] multipart::MultipartError),
 
-    // #[error("{0}")]
-    // HttpRequestError(#[from] reqwest::Error),
     #[error("{0}")]
     Sqlx(#[from] sqlx::Error),
 
     #[error("{0}")]
     Utf8Error(#[from] std::str::Utf8Error),
 
-    // #[error("{0}")]
-    // SerdeError(#[from] serde_json::Error),
     #[error("{0}")]
     Anyhow(#[from] anyhow::Error),
 
@@ -33,12 +30,25 @@ pub enum AppError {
 
     #[error("{0}")]
     StrumError(#[from] strum::ParseError),
+
+    #[error("{0}")]
+    RSpotifyIdError(#[from] rspotify::model::IdError),
+
+    #[error("{0}")]
+    RSpotifyClientError(#[from] rspotify::ClientError),
+
+    #[error("{0}")]
+    UrlParseError(#[from] url::ParseError),
+
+    #[error("{0}")]
+    HeaderError(#[from] InvalidHeaderValue),
 }
 
 impl IntoResponse for AppError {
     fn into_response(self) -> Response {
         use AppError::{
-            Anyhow, Chrono, InternalError, MultipartError, NotFound, Sqlx, StrumError, Utf8Error,
+            Anyhow, Chrono, HeaderError, InternalError, MultipartError, NotFound,
+            RSpotifyClientError, RSpotifyIdError, Sqlx, StrumError, UrlParseError, Utf8Error,
         };
 
         match self {
@@ -48,10 +58,6 @@ impl IntoResponse for AppError {
                 warn!("anyhow: {}", err);
                 (StatusCode::INTERNAL_SERVER_ERROR).into_response()
             }
-            // HttpRequestError(err) => {
-            //     warn!("request error: {}", err);
-            //     (StatusCode::INTERNAL_SERVER_ERROR).into_response()
-            // }
             Sqlx(err) => {
                 warn!("sqlx: {}", err);
                 (StatusCode::INTERNAL_SERVER_ERROR).into_response()
@@ -69,12 +75,25 @@ impl IntoResponse for AppError {
                 (StatusCode::INTERNAL_SERVER_ERROR).into_response()
             }
             StrumError(err) => {
-                warn!("strum; {}", err);
+                warn!("strum: {}", err);
                 (StatusCode::INTERNAL_SERVER_ERROR).into_response()
-            } // SerdeError(err) => {
-              //     warn!("serde: {}", err);
-              //     (StatusCode::INTERNAL_SERVER_ERROR).into_response()
-              // }
+            }
+            RSpotifyIdError(err) => {
+                warn!("rspotify: {}", err);
+                (StatusCode::INTERNAL_SERVER_ERROR).into_response()
+            }
+            RSpotifyClientError(err) => {
+                warn!("rspotify: {}", err);
+                (StatusCode::INTERNAL_SERVER_ERROR).into_response()
+            }
+            UrlParseError(err) => {
+                warn!("url parser: {}", err);
+                (StatusCode::INTERNAL_SERVER_ERROR).into_response()
+            }
+            HeaderError(err) => {
+                warn!("header error: {}", err);
+                (StatusCode::INTERNAL_SERVER_ERROR).into_response()
+            }
         }
     }
 }

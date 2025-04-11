@@ -1,15 +1,18 @@
 use anyhow::Context;
 use askama::Template;
-use rspotify::model::{AlbumId, Market};
+use axum::extract::State;
+use rspotify::model::{AlbumId, Image, Market, PlaylistId};
 use rspotify::prelude::BaseClient;
 use rspotify::{ClientCredsSpotify, Credentials};
+use serde::Deserialize;
 use sqlx::postgres::PgPoolOptions;
 use tower_http::services::{ServeDir, ServeFile};
 
 use askama_axum::IntoResponse;
-use axum::Router;
 use axum::http::StatusCode;
-use axum::routing::get;
+use axum::routing::{get, post};
+use axum::{Form, Router};
+use url::Url;
 
 use std::net::SocketAddr;
 use tower_http::compression::CompressionLayer;
@@ -19,6 +22,7 @@ use tracing::info;
 pub mod categories;
 pub mod entries;
 pub mod errors;
+pub mod spotify;
 pub mod states;
 
 #[tokio::main]
@@ -88,13 +92,14 @@ async fn main() -> anyhow::Result<()> {
         .route(
             "/admin/entries/:entry_id",
             get(entries::handlers::admin_get_entry)
-                .put(entries::handlers::admin_update)
+                .post(entries::handlers::admin_update)
                 .delete(entries::handlers::admin_delete),
         )
+        .route("/admin/image-selection", post(admin_image_selection))
         .route("/", get(index))
         .route("/health", get(health))
-        .nest_service("/favicon.ico", ServeFile::new("assets/favicon.ico"))
-        .nest_service("/assets", ServeDir::new("assets"))
+        .nest_service("/favicon.ico", ServeFile::new("public/icons/favicon.ico"))
+        .nest_service("/public", ServeDir::new("public"))
         .layer(CompressionLayer::new())
         .with_state(state.clone());
 
@@ -130,4 +135,65 @@ struct AdminIndexTemplate {}
 
 async fn admin_index() -> impl IntoResponse {
     AdminIndexTemplate {}
+}
+
+#[derive(Deserialize, Debug)]
+pub struct ImageSelectionForm {
+    spotify_url: String,
+}
+
+#[derive(Template)]
+#[template(path = "admin_categories_image_selection.html")]
+struct ImageSelectionTemplate {
+    urls: Vec<String>,
+}
+
+const MARKET: Option<Market> = Some(Market::Country(rspotify::model::Country::Germany));
+
+pub async fn admin_image_selection(
+    State(state): State<states::AppState>,
+    Form(image_selection_form): Form<ImageSelectionForm>,
+) -> Result<impl IntoResponse, errors::AppError> {
+    let with_heigh_320 = |i: &Image| i.height.is_some_and(|h| h == 320 || h == 300);
+    let url = Url::parse(&image_selection_form.spotify_url)?;
+    let segments = url
+        .path_segments()
+        .map(|c| c.collect::<Vec<_>>())
+        .ok_or(anyhow::anyhow!("no path available"))?;
+    let id = segments[1];
+    let image_urls: Vec<String> = if segments[0] == "album" {
+        let id = AlbumId::from_id(id)?;
+        let album = state.spotify.album(id, MARKET).await?;
+        let artist_ids = album
+            .artists
+            .iter()
+            .flat_map(|a| a.id.clone())
+            .collect::<Vec<_>>();
+
+        let mut images = state
+            .spotify
+            .artists(artist_ids)
+            .await?
+            .iter()
+            .flat_map(|a| a.images.clone().into_iter().find(with_heigh_320))
+            .collect::<Vec<_>>();
+
+        if let Some(album_image) = album.images.clone().into_iter().find(with_heigh_320) {
+            images.push(album_image);
+        }
+        images.iter().map(|i| i.url.clone()).collect()
+    } else if segments[0] == "playlist" {
+        let id = PlaylistId::from_id(id)?;
+        let playlist = state.spotify.playlist(id, None, MARKET).await?;
+        playlist.images.clone().into_iter().find(with_heigh_320);
+
+        let mut images: Vec<Image> = vec![];
+        if let Some(playlist_image) = playlist.images.into_iter().find(with_heigh_320) {
+            images.push(playlist_image);
+        }
+        images.iter().map(|i| i.url.clone()).collect()
+    } else {
+        vec![]
+    };
+    Ok(ImageSelectionTemplate { urls: image_urls })
 }

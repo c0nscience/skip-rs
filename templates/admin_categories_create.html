@@ -1,6 +1,6 @@
 {% extends "admin_base.html" %}
 
-{% block headline %}'{{ category.name }}' Edit{% endblock %}
+{% block headline %}Create{% endblock %}
 
 {% block admin_content %}
 <!-- Settings forms -->
@@ -10,11 +10,10 @@
 			<h2 class="text-base/7 font-semibold text-white">Edit Information</h2>
 		</div>
 
-		<form class="md:col-span-2" hx-put="/admin/categories/{{ category.id }}">
+		<form class="md:col-span-2" hx-post="/admin/categories/new">
 			<div class="grid grid-cols-1 gap-x-6 gap-y-8 sm:max-w-xl sm:grid-cols-6">
-				<input type="hidden" name="id" id="id" value="{{ category.id }}">
 				<div class="col-span-full flex items-center gap-x-8">
-					<img id="image_preview" src="{{ category.image_url }}"
+					<img id="image_preview" src=""
 						class="size-24 flex-none rounded-lg bg-gray-800 object-cover">
 				</div>
 
@@ -24,7 +23,6 @@
 					<div class="mt-2">
 						<input type="text" name="image_url" id="image_url"
 							_="on input debounced at 300ms set #image_preview.src to my value"
-							value="{{ category.image_url }}"
 							class="block w-full rounded-md bg-white/5 px-3 py-1.5 text-base text-white outline-1 -outline-offset-1 outline-white/10 placeholder:text-gray-500 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-500 sm:text-sm/6">
 					</div>
 				</div>
@@ -32,7 +30,7 @@
 				<div class="sm:col-span-full">
 					<label for="name" class="block text-sm/6 font-medium text-white">Name</label>
 					<div class="mt-2">
-						<input type="text" name="name" id="name" value="{{ category.name }}"
+						<input type="text" name="name" id="name"
 							class="block w-full rounded-md bg-white/5 px-3 py-1.5 text-base text-white outline-1 -outline-offset-1 outline-white/10 placeholder:text-gray-500 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-500 sm:text-sm/6">
 					</div>
 				</div>
@@ -43,12 +41,8 @@
 					<div class="mt-2 grid grid-cols-1">
 						<select id="category_type" name="category_type"
 							class="col-start-1 row-start-1 w-full appearance-none rounded-md bg-white/5 py-1.5 pr-8 pl-3 text-base text-white outline-1 -outline-offset-1 outline-white/10 *:bg-gray-800 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-500 sm:text-sm/6">
-							<option {%if
-								category.category_type==crate::categories::CategoryType::Audiobook
-								%}selected{%else%}{%endif%}>audiobook</option>
-							<option {%if
-								category.category_type==crate::categories::CategoryType::Music
-								%}selected{%else%}{%endif%}>music</option>
+							<option>audiobook</option>
+							<option>music</option>
 						</select>
 						<svg class="pointer-events-none col-start-1 row-start-1 mr-2 size-5 self-center justify-self-end text-gray-400 sm:size-4"
 							viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"
@@ -69,17 +63,5 @@
 	</div>
 
 	{% include "admin_image_selection.html" %}
-
-	<div class="grid max-w-7xl grid-cols-1 gap-x-8 gap-y-10 px-4 py-16 sm:px-6 md:grid-cols-3 lg:px-8">
-		<div>
-			<h2 class="text-base/7 font-semibold text-white">Delete category</h2>
-		</div>
-
-		<form hx-delete="/admin/categories/{{ category.id }}" class="flex items-start md:col-span-2">
-			<button type="submit"
-				class="rounded-md bg-red-500 px-3 py-2 text-sm font-semibold text-white shadow-xs hover:bg-red-400">Yes,
-				delete this category</button>
-		</form>
-	</div>
 </div>
 {% endblock %}

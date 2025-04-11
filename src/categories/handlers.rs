@@ -2,7 +2,13 @@ use std::str::FromStr;
 
 use askama::Template;
 use askama_axum::IntoResponse;
-use axum::extract::{Path, State};
+use axum::{
+    extract::{Path, State},
+    http::HeaderMap,
+    response::Redirect,
+};
+use axum_extra::extract::Form;
+use serde::Deserialize;
 
 use crate::{categories::CategoryType, errors, states};
 
@@ -40,14 +46,37 @@ pub async fn admin_list(
     Ok(ListTemplate { categories })
 }
 
+#[derive(Template)]
+#[template(path = "admin_categories_create.html")]
+struct CreateTemplate {}
 pub async fn admin_new() -> Result<impl IntoResponse, errors::AppError> {
-    todo!();
-    Ok(())
+    Ok(CreateTemplate {})
 }
 
-pub async fn admin_create() -> Result<impl IntoResponse, errors::AppError> {
-    todo!();
-    Ok(())
+#[derive(Deserialize)]
+pub struct CategoryCreateForm {
+    name: String,
+    image_url: String,
+    category_type: String,
+}
+
+pub async fn admin_create(
+    State(state): State<states::AppState>,
+    Form(category_form): Form<CategoryCreateForm>,
+) -> Result<impl IntoResponse, errors::AppError> {
+    let category_type = CategoryType::from_str(&category_form.category_type)?;
+    let id = super::create(
+        &state.db,
+        &category_form.name,
+        &category_form.image_url,
+        &category_type,
+    )
+    .await?;
+
+    let mut headers = HeaderMap::new();
+    let path = format!("/admin/categories/{}", id.to_string());
+    headers.insert("HX-Redirect", path.parse()?);
+    Ok(headers)
 }
 
 #[derive(Template)]
@@ -63,12 +92,46 @@ pub async fn admin_get_category(
     Ok(EditTemplate { category })
 }
 
-pub async fn admin_update() -> Result<impl IntoResponse, errors::AppError> {
-    todo!();
-    Ok(())
+#[derive(Deserialize)]
+pub struct CategoryEditForm {
+    id: String,
+    name: String,
+    image_url: String,
+    category_type: String,
 }
 
-pub async fn admin_delete() -> Result<impl IntoResponse, errors::AppError> {
-    todo!();
-    Ok(())
+impl TryInto<Category> for CategoryEditForm {
+    type Error = anyhow::Error;
+
+    fn try_into(self) -> anyhow::Result<Category, Self::Error> {
+        let id = sqlx::types::Uuid::parse_str(&self.id)?;
+        Ok(Category {
+            id,
+            name: self.name,
+            image_url: self.image_url,
+            category_type: CategoryType::from_str(&self.category_type)?,
+        })
+    }
+}
+
+pub async fn admin_update(
+    State(state): State<states::AppState>,
+    Form(category_form): Form<CategoryEditForm>,
+) -> Result<impl IntoResponse, errors::AppError> {
+    let category = category_form.try_into()?;
+    super::update(&state.db, &category).await?;
+    let mut headers = HeaderMap::new();
+    let path = format!("/admin/categories/{}", category.id.to_string());
+    headers.insert("HX-Redirect", path.parse()?);
+    Ok(headers)
+}
+
+pub async fn admin_delete(
+    Path(category_id): Path<String>,
+    State(state): State<states::AppState>,
+) -> Result<impl IntoResponse, errors::AppError> {
+    super::delete(&state.db, &category_id).await?;
+    let mut headers = HeaderMap::new();
+    headers.insert("HX-Redirect", "/admin/categories".parse().unwrap());
+    Ok(headers)
 }
