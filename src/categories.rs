@@ -1,9 +1,5 @@
-use sqlx::{
-    PgPool,
-    types::{Uuid, uuid::uuid},
-};
+use sqlx::{PgPool, types::Uuid};
 use strum::{AsRefStr, Display, EnumString};
-use tracing::info;
 
 pub mod handlers;
 
@@ -131,6 +127,5 @@ async fn create(
     )
     .fetch_one(db)
     .await?;
-    println!("rec: {:?}", rec);
     Ok(rec.id)
 }
