@@ -39,19 +39,6 @@ async fn main() -> anyhow::Result<()> {
     // I guess I have to call this once ... after that the token should be refreshed
     spotify.request_token().await?;
 
-    // we have to extract the spotify id from the given url ... the whole api seems to run on the
-    // ids only
-    // https://open.spotify.com/album/4IMxyQClyxn6nLxYAK1BDs?si=P6MKoKwATS2PXORAkUhPiA
-    // https://open.spotify.com/playlist/1aRCVcpxtMrIwOHe28AlfG?si=11635db56f104035
-    let uri = AlbumId::from_uri("spotify:album:4IMxyQClyxn6nLxYAK1BDs")?;
-    let albums = spotify
-        .album(
-            uri,
-            Some(Market::Country(rspotify::model::Country::Germany)),
-        )
-        .await?;
-    println!("Response: {}", albums.name);
-
     let db = PgPoolOptions::new()
         .max_connections(20)
         .acquire_timeout(std::time::Duration::from_secs(3))
@@ -131,10 +118,18 @@ async fn health() -> (StatusCode, impl IntoResponse) {
 
 #[derive(Template)]
 #[template(path = "admin.html")]
-struct AdminIndexTemplate {}
+struct AdminIndexTemplate {
+    category_count: u16,
+    entry_count: u16,
+    play_count: u16,
+}
 
 async fn admin_index() -> impl IntoResponse {
-    AdminIndexTemplate {}
+    AdminIndexTemplate {
+        category_count: 42,
+        entry_count: 21,
+        play_count: 9000,
+    }
 }
 
 #[derive(Deserialize, Debug)]
@@ -154,46 +149,49 @@ pub async fn admin_image_selection(
     State(state): State<states::AppState>,
     Form(image_selection_form): Form<ImageSelectionForm>,
 ) -> Result<impl IntoResponse, errors::AppError> {
-    let with_heigh_320 = |i: &Image| i.height.is_some_and(|h| h == 320 || h == 300);
+    let with_heigh = |i: &Image| i.height.is_some_and(|h| h == 320 || h == 300);
+
     let url = Url::parse(&image_selection_form.spotify_url)?;
     let segments = url
         .path_segments()
         .map(|c| c.collect::<Vec<_>>())
         .ok_or(anyhow::anyhow!("no path available"))?;
-    let id = segments[1];
-    let image_urls: Vec<String> = if segments[0] == "album" {
-        let id = AlbumId::from_id(id)?;
-        let album = state.spotify.album(id, MARKET).await?;
-        let artist_ids = album
-            .artists
-            .iter()
-            .flat_map(|a| a.id.clone())
-            .collect::<Vec<_>>();
 
-        let mut images = state
-            .spotify
-            .artists(artist_ids)
-            .await?
-            .iter()
-            .flat_map(|a| a.images.clone().into_iter().find(with_heigh_320))
-            .collect::<Vec<_>>();
+    let image_urls: Vec<String> = match segments[..] {
+        ["album", id] => {
+            let id = AlbumId::from_id(id)?;
+            let album = state.spotify.album(id, MARKET).await?;
+            let artist_ids = album
+                .artists
+                .iter()
+                .flat_map(|a| a.id.clone())
+                .collect::<Vec<_>>();
 
-        if let Some(album_image) = album.images.clone().into_iter().find(with_heigh_320) {
-            images.push(album_image);
+            let mut images = state
+                .spotify
+                .artists(artist_ids)
+                .await?
+                .iter()
+                .flat_map(|a| a.images.clone().into_iter().find(with_heigh))
+                .collect::<Vec<_>>();
+
+            if let Some(album_image) = album.images.clone().into_iter().find(with_heigh) {
+                images.push(album_image);
+            }
+            images.iter().map(|i| i.url.clone()).collect()
         }
-        images.iter().map(|i| i.url.clone()).collect()
-    } else if segments[0] == "playlist" {
-        let id = PlaylistId::from_id(id)?;
-        let playlist = state.spotify.playlist(id, None, MARKET).await?;
-        playlist.images.clone().into_iter().find(with_heigh_320);
+        ["playlist", id] => {
+            let id = PlaylistId::from_id(id)?;
+            let playlist = state.spotify.playlist(id, None, MARKET).await?;
+            playlist.images.clone().into_iter().find(with_heigh);
 
-        let mut images: Vec<Image> = vec![];
-        if let Some(playlist_image) = playlist.images.into_iter().find(with_heigh_320) {
-            images.push(playlist_image);
+            let mut images: Vec<Image> = vec![];
+            if let Some(playlist_image) = playlist.images.into_iter().find(with_heigh) {
+                images.push(playlist_image);
+            }
+            images.iter().map(|i| i.url.clone()).collect()
         }
-        images.iter().map(|i| i.url.clone()).collect()
-    } else {
-        vec![]
+        _ => vec![],
     };
     Ok(ImageSelectionTemplate { urls: image_urls })
 }
