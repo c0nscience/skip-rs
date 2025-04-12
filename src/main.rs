@@ -79,7 +79,7 @@ async fn main() -> anyhow::Result<()> {
         .route(
             "/admin/entries/:entry_id",
             get(entries::handlers::admin_get_entry)
-                .post(entries::handlers::admin_update)
+                .put(entries::handlers::admin_update)
                 .delete(entries::handlers::admin_delete),
         )
         .route("/admin/image-selection", post(admin_image_selection))

@@ -5,7 +5,6 @@ use askama_axum::IntoResponse;
 use axum::{
     extract::{Path, State},
     http::HeaderMap,
-    response::Redirect,
 };
 use axum_extra::extract::Form;
 use serde::Deserialize;

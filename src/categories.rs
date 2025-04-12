@@ -76,8 +76,7 @@ async fn get(db: &PgPool, category_id: &str) -> anyhow::Result<Category> {
 
 async fn delete(db: &PgPool, category_id: &str) -> anyhow::Result<()> {
     let id = sqlx::types::Uuid::parse_str(category_id)?;
-    sqlx::query_as!(
-        Category,
+    sqlx::query!(
         r#"
         DELETE FROM categories 
         WHERE id = $1

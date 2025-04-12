@@ -1,42 +1,41 @@
 {% extends "admin_base.html" %}
 
 {% block headline %}Entries{% endblock %}
+{% block headline_action %}
+<a href="/admin/entries/new"
+	class="block rounded-md bg-indigo-500 px-3 py-2 text-center text-sm font-semibold text-white hover:bg-indigo-400 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500">Add</a>
+{% endblock %}
 
 {% block admin_content %}
-
-<ul role="list" class="divide-y divide-white/5">
-	<li class="relative flex items-center space-x-4 px-4 py-4 sm:px-6 lg:px-8">
-		<div class="min-w-0 flex-auto">
-			<div class="flex items-center gap-x-3">
-				<div class="flex-none rounded-full bg-gray-100/10 p-1 text-gray-500">
-					<div class="size-2 rounded-full bg-current"></div>
-				</div>
-				<h2 class="min-w-0 text-sm/6 font-semibold text-white">
-					<a href="#" class="flex gap-x-2">
-						<span class="truncate">Planetaria</span>
-						<span class="text-gray-400">/</span>
-						<span class="whitespace-nowrap">ios-app</span>
-						<span class="absolute inset-0"></span>
-					</a>
-				</h2>
-			</div>
-			<div class="mt-3 flex items-center gap-x-2.5 text-xs/5 text-gray-400">
-				<p class="truncate">Deploys from GitHub</p>
-				<svg viewBox="0 0 2 2" class="size-0.5 flex-none fill-gray-300">
-					<circle cx="1" cy="1" r="1" />
-				</svg>
-				<p class="whitespace-nowrap">Initiated 1m 32s ago</p>
-			</div>
+<div class="mt-2 mx-2 sm:mt-8 sm:mt-8 flow-root">
+	{% for category in categories %}
+	<div class="relative my-4">
+		<div class="absolute inset-0 flex items-center" aria-hidden="true">
+			<div class="w-full border-t border-gray-600"></div>
 		</div>
-		<div
-			class="flex-none rounded-full bg-gray-400/10 px-2 py-1 text-xs font-medium text-gray-400 ring-1 ring-gray-400/20 ring-inset">
-			Preview</div>
-		<svg class="size-5 flex-none text-gray-400" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"
-			data-slot="icon">
-			<path fill-rule="evenodd"
-				d="M8.22 5.22a.75.75 0 0 1 1.06 0l4.25 4.25a.75.75 0 0 1 0 1.06l-4.25 4.25a.75.75 0 0 1-1.06-1.06L11.94 10 8.22 6.28a.75.75 0 0 1 0-1.06Z"
-				clip-rule="evenodd" />
-		</svg>
-	</li>
-</ul>
+		<div class="relative flex justify-center">
+			<span class="bg-gray-900 px-3 text-base font-semibold text-gray-300">{%if category.name == "" %}
+				Orphan Entries {% else %} {{category.name}} {% endif %}</span>
+		</div>
+	</div>
+	<ul role="list" class="grid grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-3 sm:gap-x-6 lg:grid-cols-6 xl:gap-x-8">
+		{% for entry in category.entries %}
+		<li class="relative">
+			<div
+				class="group overflow-hidden rounded-lg bg-gray-100 focus-within:ring-2 focus-within:ring-indigo-500 focus-within:ring-offset-2 focus-within:ring-offset-gray-100">
+				<img src="{{ entry.image_url }}"
+					class="pointer-events-none object-contain group-hover:opacity-75">
+				<a href="/admin/entries/{{ entry.id }}" type="button"
+					class="absolute inset-0 focus:outline-hidden">
+				</a>
+			</div>
+			<p class="pointer-events-none mt-2 block truncate text-sm font-medium text-gray-300">
+				{{ entry.name }}</p>
+			<!-- <p class="pointer-events-none block text-sm font-medium text-gray-500">3.9 MB</p> -->
+		</li>
+		{% endfor %}
+
+	</ul>
+	{% endfor %}
+</div>
 {% endblock %}
