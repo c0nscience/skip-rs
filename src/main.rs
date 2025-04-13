@@ -138,19 +138,20 @@ pub struct ImageSelectionForm {
 }
 
 #[derive(Template)]
-#[template(path = "admin_categories_image_selection.html")]
+#[template(path = "admin_image_selection.html")]
 struct ImageSelectionTemplate {
     urls: Vec<String>,
 }
 
-const MARKET: Option<Market> = Some(Market::Country(rspotify::model::Country::Germany));
+pub const MARKET: Option<Market> = Some(Market::Country(rspotify::model::Country::Germany));
+fn with_height(i: &Image) -> bool {
+    i.height.is_some_and(|h| h == 320 || h == 300)
+}
 
 pub async fn admin_image_selection(
     State(state): State<states::AppState>,
     Form(image_selection_form): Form<ImageSelectionForm>,
 ) -> Result<impl IntoResponse, errors::AppError> {
-    let with_heigh = |i: &Image| i.height.is_some_and(|h| h == 320 || h == 300);
-
     let url = Url::parse(&image_selection_form.spotify_url)?;
     let segments = url
         .path_segments()
@@ -172,10 +173,10 @@ pub async fn admin_image_selection(
                 .artists(artist_ids)
                 .await?
                 .iter()
-                .flat_map(|a| a.images.clone().into_iter().find(with_heigh))
+                .flat_map(|a| a.images.clone().into_iter().find(with_height))
                 .collect::<Vec<_>>();
 
-            if let Some(album_image) = album.images.clone().into_iter().find(with_heigh) {
+            if let Some(album_image) = album.images.clone().into_iter().find(with_height) {
                 images.push(album_image);
             }
             images.iter().map(|i| i.url.clone()).collect()
@@ -183,10 +184,10 @@ pub async fn admin_image_selection(
         ["playlist", id] => {
             let id = PlaylistId::from_id(id)?;
             let playlist = state.spotify.playlist(id, None, MARKET).await?;
-            playlist.images.clone().into_iter().find(with_heigh);
+            playlist.images.clone().into_iter().find(with_height);
 
             let mut images: Vec<Image> = vec![];
-            if let Some(playlist_image) = playlist.images.into_iter().find(with_heigh) {
+            if let Some(playlist_image) = playlist.images.into_iter().find(with_height) {
                 images.push(playlist_image);
             }
             images.iter().map(|i| i.url.clone()).collect()

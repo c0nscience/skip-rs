@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        SELECT id, name, image_url, entry_type AS \"entry_type!: EntryType\"\n        FROM entries\n        WHERE id = $1\n        ",
+  "query": "\n        SELECT id, name, image_url, entry_type AS \"entry_type!: EntryType\", spotify_uri, spotify_id, play_count as \"play_count!\", blob\n        FROM entries\n        WHERE id = $1\n        ",
   "describe": {
     "columns": [
       {
@@ -32,6 +32,26 @@
             }
           }
         }
+      },
+      {
+        "ordinal": 4,
+        "name": "spotify_uri",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 5,
+        "name": "spotify_id",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 6,
+        "name": "play_count!",
+        "type_info": "Int2"
+      },
+      {
+        "ordinal": 7,
+        "name": "blob",
+        "type_info": "Json"
       }
     ],
     "parameters": {
@@ -43,8 +63,12 @@
       false,
       false,
       false,
+      true,
+      false,
+      false,
+      true,
       true
     ]
   },
-  "hash": "a428936d2d0c98f09e8697732fea681d2ef43236efc9f1d768b96cf90a8e914a"
+  "hash": "6e1040bed6b975fb2efdad9416be1e5e53a5a3984ab62bb8331a3ac872e4f1f1"
 }

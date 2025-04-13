@@ -14,19 +14,14 @@ pub enum EntryType {
     #[strum(serialize = "playlist")]
     Playlist,
 }
-#[derive(Debug, sqlx::FromRow)]
-pub struct Entry {
-    id: sqlx::types::Uuid,
-    name: String,
-}
 
-async fn list_all_by_type(db: &PgPool, category_id: &str) -> anyhow::Result<Vec<Entry>> {
+async fn list_all_by_type(db: &PgPool, category_id: &str) -> anyhow::Result<Vec<EntryListModel>> {
     let id = sqlx::types::Uuid::parse_str(category_id)?;
     let result = sqlx::query_as!(
-        Entry,
+        EntryListModel,
         r#"
         SELECT 
-            id, name 
+            id, name, image_url
         FROM entries
         WHERE category_id = $1
         "#,
@@ -106,6 +101,10 @@ pub struct EntryEditModel {
     name: String,
     image_url: String,
     entry_type: EntryType,
+    spotify_uri: String,
+    spotify_id: String,
+    play_count: i16,
+    blob: serde_json::Value,
 }
 
 async fn get(db: &PgPool, entry_id: &str) -> anyhow::Result<EntryEditModel> {
@@ -113,7 +112,7 @@ async fn get(db: &PgPool, entry_id: &str) -> anyhow::Result<EntryEditModel> {
     let result = sqlx::query_as!(
         EntryEditModel,
         r#"
-        SELECT id, name, image_url, entry_type AS "entry_type!: EntryType"
+        SELECT id, name, image_url, entry_type AS "entry_type!: EntryType", spotify_uri, spotify_id, play_count as "play_count!", blob
         FROM entries
         WHERE id = $1
         "#,
@@ -132,13 +131,21 @@ async fn update(db: &PgPool, entry: &EntryEditModel) -> anyhow::Result<()> {
         SET
             name = $2,
             image_url = $3,
-            entry_type = ($4::text)::entry_type
+            entry_type = ($4::text)::entry_type,
+            spotify_uri = $5,
+            spotify_id = $6,
+            play_count = $7,
+            blob = $8
         WHERE id = $1
         "#,
         entry.id,
         entry.name,
         entry.image_url,
         entry.entry_type.as_ref(),
+        entry.spotify_uri,
+        entry.spotify_id,
+        entry.play_count,
+        entry.blob
     )
     .execute(db)
     .await?;
@@ -161,21 +168,31 @@ async fn delete(db: &PgPool, entry_id: &str) -> anyhow::Result<()> {
     Ok(())
 }
 
-async fn create(
-    db: &PgPool,
-    name: &str,
-    image_url: &str,
-    entry_type: &EntryType,
-) -> anyhow::Result<Uuid> {
+#[derive(Debug, PartialEq)]
+struct EntryCreateModel {
+    name: String,
+    image_url: String,
+    entry_type: EntryType,
+    spotify_uri: String,
+    spotify_id: String,
+    play_count: i16,
+    blob: serde_json::Value,
+}
+
+async fn create(db: &PgPool, entry: EntryCreateModel) -> anyhow::Result<Uuid> {
     let rec = sqlx::query!(
         r#"
-        INSERT INTO entries (name, image_url, entry_type)
-        VALUES ($1, $2, ($3::text)::entry_type)
+        INSERT INTO entries (name, image_url, entry_type, spotify_uri, spotify_id, play_count, blob)
+        VALUES ($1, $2, ($3::text)::entry_type, $4, $5, $6, $7)
         RETURNING id
         "#,
-        name,
-        image_url,
-        entry_type.as_ref()
+        entry.name,
+        entry.image_url,
+        entry.entry_type.as_ref(),
+        entry.spotify_uri,
+        entry.spotify_id,
+        entry.play_count,
+        entry.blob
     )
     .fetch_one(db)
     .await?;

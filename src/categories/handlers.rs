@@ -48,6 +48,7 @@ pub async fn admin_list(
 #[derive(Template)]
 #[template(path = "admin_categories_create.html")]
 struct CreateTemplate {}
+
 pub async fn admin_new() -> Result<impl IntoResponse, errors::AppError> {
     Ok(CreateTemplate {})
 }

@@ -7,5 +7,6 @@ CREATE TABLE entries(
 	spotify_uri TEXT NOT NULL,
 	spotify_id TEXT NOT NULL,
 	play_count smallint,
-	entry_type entry_type
+	entry_type entry_type,
+	blob JSON
 );
