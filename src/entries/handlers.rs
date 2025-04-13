@@ -7,7 +7,6 @@ use axum::{
     Form,
     extract::{Path, State},
     http::HeaderMap,
-    routing::any,
 };
 use rspotify::{
     model::{AlbumId, Id, Image, PlaylistId},
@@ -15,9 +14,15 @@ use rspotify::{
 };
 use serde::Deserialize;
 use serde_json::json;
+use serde_with::NoneAsEmptyString;
+use serde_with::serde_as;
 use url::Url;
 
-use crate::{MARKET, categories::CategoryType, errors, states, with_height};
+use crate::{
+    MARKET,
+    categories::{self, CategoryType},
+    errors, states, with_height,
+};
 
 use super::{CategoryListModel, EntryCreateModel, EntryEditModel, EntryListModel, EntryType};
 
@@ -75,10 +80,16 @@ pub async fn admin_list(
     Ok(ListTemplate { categories })
 }
 
+struct CategoryEntryEditModel {
+    id: sqlx::types::Uuid,
+    name: String,
+}
+
 #[derive(Template)]
 #[template(path = "admin_entries_edit.html")]
 struct EditTemplate {
     entry: EntryEditModel,
+    categories: Vec<CategoryEntryEditModel>,
 }
 
 pub async fn admin_get_entry(
@@ -86,10 +97,19 @@ pub async fn admin_get_entry(
     State(state): State<states::AppState>,
 ) -> Result<impl IntoResponse, errors::AppError> {
     let entry = super::get(&state.db, &entry_id).await?;
-    Ok(EditTemplate { entry })
+    let categories = categories::list_all(&state.db)
+        .await?
+        .iter()
+        .map(|c| CategoryEntryEditModel {
+            id: c.id.clone(),
+            name: c.name.clone(),
+        })
+        .collect();
+    Ok(EditTemplate { entry, categories })
 }
 
-#[derive(Deserialize)]
+#[serde_as]
+#[derive(Debug, Deserialize)]
 pub struct EntryEditForm {
     id: String,
     name: String,
@@ -99,12 +119,21 @@ pub struct EntryEditForm {
     spotify_id: String,
     play_count: i16,
     blob: serde_json::Value,
+
+    #[serde_as(as = "NoneAsEmptyString")]
+    category_id: Option<String>,
 }
 
 impl TryInto<EntryEditModel> for EntryEditForm {
     type Error = anyhow::Error;
 
     fn try_into(self) -> anyhow::Result<EntryEditModel, Self::Error> {
+        let category_id = if let Some(category_id) = self.category_id {
+            Some(sqlx::types::Uuid::parse_str(&category_id)?)
+        } else {
+            Option::None
+        };
+
         Ok(EntryEditModel {
             id: sqlx::types::Uuid::parse_str(&self.id)?,
             name: self.name,
@@ -114,6 +143,7 @@ impl TryInto<EntryEditModel> for EntryEditForm {
             spotify_id: self.spotify_id,
             play_count: self.play_count,
             blob: self.blob,
+            category_id,
         })
     }
 }
@@ -121,7 +151,7 @@ pub async fn admin_update(
     State(state): State<states::AppState>,
     Form(entry_form): Form<EntryEditForm>,
 ) -> Result<impl IntoResponse, errors::AppError> {
-    let entry = entry_form.try_into()?;
+    let entry: EntryEditModel = entry_form.try_into()?;
     super::update(&state.db, &entry).await?;
 
     let mut headers = HeaderMap::new();

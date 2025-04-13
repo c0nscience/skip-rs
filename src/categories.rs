@@ -41,7 +41,7 @@ async fn list_all_by_type(
     Ok(result)
 }
 
-async fn list_all(db: &PgPool) -> anyhow::Result<Vec<Category>> {
+pub async fn list_all(db: &PgPool) -> anyhow::Result<Vec<Category>> {
     let result = sqlx::query_as!(
         Category,
         r#"

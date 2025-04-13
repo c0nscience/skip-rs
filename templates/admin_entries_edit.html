@@ -58,6 +58,36 @@
 						</svg>
 					</div>
 				</div>
+				<div class="col-span-full">
+					<label for="category_id"
+						class="block text-sm/6 font-medium text-white">Category</label>
+					<div class="mt-2 grid grid-cols-1">
+						<select id="category_id" name="category_id"
+							class="col-start-1 row-start-1 w-full appearance-none rounded-md bg-white/5 py-1.5 pr-8 pl-3 text-base text-white outline-1 -outline-offset-1 outline-white/10 *:bg-gray-800 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-500 sm:text-sm/6">
+							<option value="">None</option>
+							{% for category in categories %}
+							<option value="{{ category.id }}" {% if let
+								Some(cid)=entry.category_id %} {% if
+								cid.to_string()==category.id.to_string() %}selected{%
+								endif %}{% endif %}>
+								{{ category.name }}</option>
+							{% endfor %}
+						</select>
+						<svg class="pointer-events-none col-start-1 row-start-1 mr-2 size-5 self-center justify-self-end text-gray-400 sm:size-4"
+							viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"
+							data-slot="icon">
+							<path fill-rule="evenodd"
+								d="M4.22 6.22a.75.75 0 0 1 1.06 0L8 8.94l2.72-2.72a.75.75 0 1 1 1.06 1.06l-3.25 3.25a.75.75 0 0 1-1.06 0L4.22 7.28a.75.75 0 0 1 0-1.06Z"
+								clip-rule="evenodd" />
+						</svg>
+					</div>
+				</div>
+
+				<input type="hidden" name="spotify_uri" id="spotify_uri"
+					value="{{entry.spotify_uri}}" />
+				<input type="hidden" name="spotify_id" id="spotify_id" value="{{entry.spotify_id}}" />
+				<input type="hidden" name="play_count" id="play_count" value="{{entry.play_count}}" />
+				<input type="hidden" name="blob" id="blob" value="{{entry.blob}}" />
 			</div>
 
 			<div class="mt-8 flex">

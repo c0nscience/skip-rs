@@ -105,6 +105,7 @@ pub struct EntryEditModel {
     spotify_id: String,
     play_count: i16,
     blob: serde_json::Value,
+    category_id: Option<sqlx::types::Uuid>,
 }
 
 async fn get(db: &PgPool, entry_id: &str) -> anyhow::Result<EntryEditModel> {
@@ -112,7 +113,7 @@ async fn get(db: &PgPool, entry_id: &str) -> anyhow::Result<EntryEditModel> {
     let result = sqlx::query_as!(
         EntryEditModel,
         r#"
-        SELECT id, name, image_url, entry_type AS "entry_type!: EntryType", spotify_uri, spotify_id, play_count as "play_count!", blob
+        SELECT id, name, image_url, entry_type AS "entry_type!: EntryType", spotify_uri, spotify_id, play_count as "play_count!", blob, category_id
         FROM entries
         WHERE id = $1
         "#,
@@ -135,7 +136,8 @@ async fn update(db: &PgPool, entry: &EntryEditModel) -> anyhow::Result<()> {
             spotify_uri = $5,
             spotify_id = $6,
             play_count = $7,
-            blob = $8
+            blob = $8,
+            category_id = $9
         WHERE id = $1
         "#,
         entry.id,
@@ -145,7 +147,8 @@ async fn update(db: &PgPool, entry: &EntryEditModel) -> anyhow::Result<()> {
         entry.spotify_uri,
         entry.spotify_id,
         entry.play_count,
-        entry.blob
+        entry.blob,
+        entry.category_id
     )
     .execute(db)
     .await?;

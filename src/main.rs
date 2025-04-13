@@ -22,7 +22,6 @@ use tracing::info;
 pub mod categories;
 pub mod entries;
 pub mod errors;
-pub mod spotify;
 pub mod states;
 
 #[tokio::main]
@@ -74,7 +73,7 @@ async fn main() -> anyhow::Result<()> {
         .route("/admin/entries", get(entries::handlers::admin_list))
         .route(
             "/admin/entries/new",
-            get(entries::handlers::admin_new).post(categories::handlers::admin_create),
+            get(entries::handlers::admin_new).post(entries::handlers::admin_create),
         )
         .route(
             "/admin/entries/:entry_id",
@@ -138,7 +137,7 @@ pub struct ImageSelectionForm {
 }
 
 #[derive(Template)]
-#[template(path = "admin_image_selection.html")]
+#[template(path = "admin_categories_image_selection.html")]
 struct ImageSelectionTemplate {
     urls: Vec<String>,
 }
