@@ -1,0 +1,2 @@
+sloc:
+	tokei src templates
