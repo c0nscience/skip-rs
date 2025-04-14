@@ -97,18 +97,18 @@ async fn list_all(db: &PgPool) -> anyhow::Result<Vec<CategoryListModel>> {
 
 #[derive(Debug, sqlx::FromRow)]
 pub struct EntryEditModel {
-    id: sqlx::types::Uuid,
-    name: String,
-    image_url: String,
-    entry_type: EntryType,
-    spotify_uri: String,
-    spotify_id: String,
-    play_count: i16,
-    blob: serde_json::Value,
-    category_id: Option<sqlx::types::Uuid>,
+    pub id: sqlx::types::Uuid,
+    pub name: String,
+    pub image_url: String,
+    pub entry_type: EntryType,
+    pub spotify_uri: String,
+    pub spotify_id: String,
+    pub play_count: i16,
+    pub blob: serde_json::Value,
+    pub category_id: Option<sqlx::types::Uuid>,
 }
 
-async fn get(db: &PgPool, entry_id: &str) -> anyhow::Result<EntryEditModel> {
+pub async fn get(db: &PgPool, entry_id: &str) -> anyhow::Result<EntryEditModel> {
     let id = sqlx::types::Uuid::parse_str(entry_id)?;
     let result = sqlx::query_as!(
         EntryEditModel,

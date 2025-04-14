@@ -16,6 +16,7 @@ use serde::Deserialize;
 use serde_json::json;
 use serde_with::NoneAsEmptyString;
 use serde_with::serde_as;
+use strum::Display;
 use url::Url;
 
 use crate::{
@@ -47,23 +48,37 @@ pub async fn list(
     })
 }
 
+#[derive(Deserialize, Debug, PartialEq, Display)]
+pub enum Room {
+    Playroom,
+    Bathroom,
+    Kitchen,
+    LivingRoom,
+}
+
 #[derive(Template)]
 #[template(path = "entry.html")]
 struct EntryTemplate {
     category_id: String,
     category_type: CategoryType,
     entry_id: String,
+    image_url: String,
+    rooms: Vec<Room>,
 }
 
 pub async fn get_entry(
     Path((category, category_id, entry_id)): Path<(String, String, String)>,
-    State(_state): State<states::AppState>,
+    State(state): State<states::AppState>,
 ) -> Result<impl IntoResponse, errors::AppError> {
     let category_type = CategoryType::from_str(&category)?;
+    let entry = super::get(&state.db, &entry_id).await?;
+    let rooms = state.ha_client.available_rooms().await?;
     Ok(EntryTemplate {
         category_id,
         category_type,
         entry_id,
+        image_url: entry.image_url,
+        rooms,
     })
 }
 

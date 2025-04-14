@@ -1,6 +1,6 @@
 use anyhow::Context;
 use askama::Template;
-use axum::extract::State;
+use axum::extract::{Path, State};
 use rspotify::model::{AlbumId, Image, Market, PlaylistId};
 use rspotify::prelude::BaseClient;
 use rspotify::{ClientCredsSpotify, Credentials};
@@ -9,7 +9,7 @@ use sqlx::postgres::PgPoolOptions;
 use tower_http::services::{ServeDir, ServeFile};
 
 use askama_axum::IntoResponse;
-use axum::http::StatusCode;
+use axum::http::{HeaderMap, StatusCode};
 use axum::routing::{get, post};
 use axum::{Form, Router};
 use url::Url;
@@ -22,6 +22,7 @@ use tracing::info;
 pub mod categories;
 pub mod entries;
 pub mod errors;
+pub mod ha;
 pub mod states;
 
 #[tokio::main]
@@ -31,6 +32,9 @@ async fn main() -> anyhow::Result<()> {
     let port = dotenvy::var("PORT").map_or_else(|_| Ok(3000), |p| p.parse::<u16>())?;
     let database_url =
         dotenvy::var("DATABASE_URL").context("no postgres connection url provided")?;
+
+    let ha_host = dotenvy::var("HA_HOST").context("no home assistent connection url provided")?;
+    let ha_token = dotenvy::var("HA_TOKEN").context("no home assistent token provided")?;
 
     let creds = Credentials::from_env().context("no spotify credentials found.")?;
 
@@ -46,7 +50,13 @@ async fn main() -> anyhow::Result<()> {
         .context("could not connect to database")?;
     sqlx::migrate!().run(&db).await?;
 
-    let state = states::AppState { db, spotify };
+    let ha_client = ha::Client::new(&ha_host, &ha_token);
+
+    let state = states::AppState {
+        db,
+        spotify,
+        ha_client,
+    };
 
     let app = Router::new()
         .route("/:category/categories", get(categories::handlers::list))
@@ -56,7 +66,7 @@ async fn main() -> anyhow::Result<()> {
         )
         .route(
             "/:category/categories/:category_id/entries/:entry_id",
-            get(entries::handlers::get_entry),
+            get(entries::handlers::get_entry).post(play),
         )
         .route("/admin", get(admin_index))
         .route("/admin/categories", get(categories::handlers::admin_list))
@@ -194,4 +204,26 @@ pub async fn admin_image_selection(
         _ => vec![],
     };
     Ok(ImageSelectionTemplate { urls: image_urls })
+}
+
+#[derive(Deserialize, Debug)]
+pub struct RoomSelectionForm {
+    room: entries::handlers::Room,
+}
+pub async fn play(
+    Path((category, category_id, entry_id)): Path<(String, String, String)>,
+    State(state): State<states::AppState>,
+    Form(room_selection_form): Form<RoomSelectionForm>,
+) -> Result<impl IntoResponse, errors::AppError> {
+    let entry = entries::get(&state.db, &entry_id).await?;
+    state
+        .ha_client
+        .play(&room_selection_form.room, &entry.spotify_uri)
+        .await?;
+
+    info!("started {} in {}", &entry.name, &room_selection_form.room);
+    let mut headers = HeaderMap::new();
+    let path = format!("/{}/categories/{}/entries", category, category_id);
+    headers.insert("HX-Redirect", path.parse()?);
+    Ok(headers)
 }
