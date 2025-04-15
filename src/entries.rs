@@ -23,6 +23,7 @@ async fn list_all_by_type(db: &PgPool, category_id: &str) -> anyhow::Result<Vec<
         SELECT 
             id, name, image_url
         FROM entries
+        ORDER BY name
         WHERE category_id = $1
         "#,
         id
