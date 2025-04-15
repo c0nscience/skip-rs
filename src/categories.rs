@@ -32,6 +32,7 @@ async fn list_all_by_type(
             id, name, image_url, category_type AS "category_type!: CategoryType" 
         FROM categories
         WHERE category_type = ($1::text)::category_type
+        ORDER BY name
         "#,
         category_type.as_ref()
     )
@@ -48,6 +49,7 @@ pub async fn list_all(db: &PgPool) -> anyhow::Result<Vec<Category>> {
         SELECT 
             id, name, image_url, category_type AS "category_type!: CategoryType" 
         FROM categories
+        ORDER BY name
         "#,
     )
     .fetch_all(db)

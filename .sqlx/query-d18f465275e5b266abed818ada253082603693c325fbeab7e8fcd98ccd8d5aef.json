@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        SELECT e.id as \"entry_id\", e.name as \"entry_name\", e.image_url as \"entry_image_url\", c.id as \"category_id\", c.name as \"catgegory_name\"\n        FROM entries as e\n        LEFT OUTER JOIN categories as c ON e.category_id = c.id;\n        ",
+  "query": "\n        SELECT e.id as \"entry_id\", e.name as \"entry_name\", e.image_url as \"entry_image_url\", c.id as \"category_id\", c.name as \"catgegory_name\"\n        FROM entries as e\n        LEFT OUTER JOIN categories as c ON e.category_id = c.id\n        ORDER BY e.name\n        ",
   "describe": {
     "columns": [
       {
@@ -36,9 +36,9 @@
       false,
       false,
       false,
-      true,
-      true
+      false,
+      false
     ]
   },
-  "hash": "d35de323f7cd98dc7257b4c900305a196a1127d53e855fd118f256c119910630"
+  "hash": "d18f465275e5b266abed818ada253082603693c325fbeab7e8fcd98ccd8d5aef"
 }

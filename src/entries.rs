@@ -23,8 +23,8 @@ async fn list_all_by_type(db: &PgPool, category_id: &str) -> anyhow::Result<Vec<
         SELECT 
             id, name, image_url
         FROM entries
-        ORDER BY name
         WHERE category_id = $1
+        ORDER BY name
         "#,
         id
     )
@@ -52,7 +52,8 @@ async fn list_all(db: &PgPool) -> anyhow::Result<Vec<CategoryListModel>> {
         r#"
         SELECT e.id as "entry_id", e.name as "entry_name", e.image_url as "entry_image_url", c.id as "category_id", c.name as "catgegory_name"
         FROM entries as e
-        LEFT OUTER JOIN categories as c ON e.category_id = c.id;
+        LEFT OUTER JOIN categories as c ON e.category_id = c.id
+        ORDER BY e.name
         "#)
         .fetch_all(db)
         .await?;
@@ -61,8 +62,8 @@ async fn list_all(db: &PgPool) -> anyhow::Result<Vec<CategoryListModel>> {
         .iter()
         .fold(
             HashMap::new(),
-            |mut acc, r| -> HashMap<Option<String>, CategoryListModel> {
-                match acc.get_mut(&r.category_id.map(|id| id.to_string())) {
+            |mut acc, r| -> HashMap<String, CategoryListModel> {
+                match acc.get_mut(&r.category_id.to_string()) {
                     Some(category) => category.entries.push(EntryListModel {
                         id: r.entry_id.to_string(),
                         name: r.entry_name.clone(),
@@ -70,9 +71,9 @@ async fn list_all(db: &PgPool) -> anyhow::Result<Vec<CategoryListModel>> {
                     }),
                     None => {
                         acc.insert(
-                            r.category_id.map(|id| id.to_string()),
+                            r.category_id.to_string(),
                             CategoryListModel {
-                                name: r.catgegory_name.clone().unwrap_or_else(|| "".to_string()),
+                                name: r.catgegory_name.clone(),
                                 entries: vec![EntryListModel {
                                     id: r.entry_id.to_string(),
                                     name: r.entry_name.clone(),

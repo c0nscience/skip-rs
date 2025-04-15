@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        SELECT \n            id, name, image_url\n        FROM entries\n        WHERE category_id = $1\n        ",
+  "query": "\n        SELECT \n            id, name, image_url\n        FROM entries\n        WHERE category_id = $1\n        ORDER BY name\n        ",
   "describe": {
     "columns": [
       {
@@ -30,5 +30,5 @@
       false
     ]
   },
-  "hash": "cf9a70bf798471f4e79e32f957dc48a08edfa8f983f87090131e2ee957925179"
+  "hash": "fa45c97e52999c0255436ed25bd39a8a5a6b03fcbf8d8e4d88d921e3c7ab7c03"
 }

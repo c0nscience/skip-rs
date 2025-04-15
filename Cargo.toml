@@ -14,7 +14,7 @@ rspotify = { version = "0.14.0", features = ["client-reqwest"], default-features
 serde = { version = "1.0.219", default-features = false }
 serde_json = "1.0.140"
 serde_with = { version = "3.12.0", features = ["macros"], default-features = false }
-sqlx = { version = "0.8.4", features = ["runtime-tokio", "tls-native-tls", "json", "macros", "migrate", "postgres", "uuid"] }
+sqlx = { version = "=0.8.3", features = ["runtime-tokio", "tls-native-tls", "json", "macros", "migrate", "postgres", "uuid"] }
 strum = { version = "0.27.1", features = ["derive"] }
 thiserror = { version = "2.0.9", default-features = false }
 tokio = { version = "1.42.0", features = ["rt-multi-thread"] }
