@@ -1,6 +1,7 @@
 use anyhow::Context;
 use askama::Template;
 use axum::extract::{Path, State};
+use axum::response::Redirect;
 use rspotify::model::{AlbumId, Image, Market, PlaylistId};
 use rspotify::prelude::BaseClient;
 use rspotify::{ClientCredsSpotify, Credentials};
@@ -92,7 +93,10 @@ async fn main() -> anyhow::Result<()> {
                 .delete(entries::handlers::admin_delete),
         )
         .route("/admin/image-selection", post(admin_image_selection))
-        .route("/", get(index))
+        .route(
+            "/",
+            get(|| async { Redirect::permanent("/audiobook/categories") }),
+        )
         .route("/health", get(health))
         .nest_service("/favicon.ico", ServeFile::new("public/icons/favicon.ico"))
         .nest_service("/public", ServeDir::new("public"))
@@ -111,14 +115,6 @@ async fn main() -> anyhow::Result<()> {
     )
     .await
     .context("failed to start server")
-}
-
-#[derive(Template)]
-#[template(path = "index.html")]
-struct IndexTemplate {}
-
-async fn index() -> impl IntoResponse {
-    IndexTemplate {}
 }
 
 async fn health() -> (StatusCode, impl IntoResponse) {

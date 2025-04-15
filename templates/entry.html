@@ -25,18 +25,48 @@
 					end">
 		</div>
 		{% endfor %}
-		<div class="col-span-2 flex justify-center">
-			<button type="button" class="rounded-full bg-red-600 p-2 text-white" _="on click go back">
-				<svg viewBox="0 0 24 24" fill="currentColor" class="size-12">
+		<!-- <div class="col-span-2 flex justify-center"> -->
+		<!-- 	<button type="button" class="rounded-full bg-red-600 p-2 text-white" _="on click go back"> -->
+		<!-- 		<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" -->
+		<!-- 			class="size-12"> -->
+		<!-- 			<path fill-rule="evenodd" -->
+		<!-- 				d="M7.72 12.53a.75.75 0 0 1 0-1.06l7.5-7.5a.75.75 0 1 1 1.06 1.06L9.31 12l6.97 6.97a.75.75 0 1 1-1.06 1.06l-7.5-7.5Z" -->
+		<!-- 				clip-rule="evenodd" /> -->
+		<!-- 		</svg> -->
+		<!---->
+		<!-- 	</button> -->
+		<!-- </div> -->
+		<!-- <div class="col-span-2 flex justify-center"> -->
+		<!-- 	<button type="submit" disabled -->
+		<!-- 		class="rounded-full bg-green-600 p-2 text-white disabled:bg-gray-500" _="on change from closest <form/>  -->
+		<!-- 		if (<:checked/>).length > 0 -->
+		<!-- 			remove @disabled -->
+		<!-- 		else -->
+		<!-- 			add @disabled -->
+		<!--                               end"> -->
+		<!-- 		<svg viewBox="0 0 24 24" fill="currentColor" class="size-12"> -->
+		<!-- 			<path fill-rule="evenodd" -->
+		<!-- 				d="M4.5 5.653c0-1.427 1.529-2.33 2.779-1.643l11.54 6.347c1.295.712 1.295 2.573 0 3.286L7.28 19.99c-1.25.687-2.779-.217-2.779-1.643V5.653Z" -->
+		<!-- 				clip-rule="evenodd" /> -->
+		<!-- 		</svg> -->
+		<!-- 	</button> -->
+		<!-- </div> -->
+	</div>
+	<div
+		class="fixed z-50 w-full h-16 max-w-lg -translate-x-1/2 bg-gray-700 border border-gray-600 rounded-full bottom-4 left-1/2">
+		<div class="grid h-full max-w-lg grid-cols-4 mx-auto">
+			<button type="button" _="on click go back"
+				class="col-span-2 inline-flex flex-col items-center justify-center px-5 rounded-s-full hover:bg-gray-800 group">
+				<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
+					class="text-red-600 size-12">
 					<path fill-rule="evenodd"
-						d="M5.47 5.47a.75.75 0 0 1 1.06 0L12 10.94l5.47-5.47a.75.75 0 1 1 1.06 1.06L13.06 12l5.47 5.47a.75.75 0 1 1-1.06 1.06L12 13.06l-5.47 5.47a.75.75 0 0 1-1.06-1.06L10.94 12 5.47 6.53a.75.75 0 0 1 0-1.06Z"
+						d="M7.72 12.53a.75.75 0 0 1 0-1.06l7.5-7.5a.75.75 0 1 1 1.06 1.06L9.31 12l6.97 6.97a.75.75 0 1 1-1.06 1.06l-7.5-7.5Z"
 						clip-rule="evenodd" />
 				</svg>
 			</button>
-		</div>
-		<div class="col-span-2 flex justify-center">
 			<button type="submit" disabled
-				class="rounded-full bg-green-600 p-2 text-white disabled:bg-gray-500" _="on change from closest <form/> 
+				class="col-span-2 inline-flex flex-col items-center justify-center px-5 rounded-e-full hover:bg-gray-800 group disabled:bg-gray-500 text-green-600 disabled:text-white"
+				_="on change from closest <form/>
 				if (<:checked/>).length > 0
 					remove @disabled
 				else
