@@ -26,9 +26,6 @@ pub enum AppError {
     Anyhow(#[from] anyhow::Error),
 
     #[error("{0}")]
-    Chrono(#[from] chrono::ParseError),
-
-    #[error("{0}")]
     StrumError(#[from] strum::ParseError),
 
     #[error("{0}")]
@@ -42,12 +39,15 @@ pub enum AppError {
 
     #[error("{0}")]
     HeaderError(#[from] InvalidHeaderValue),
+
+    #[error("{0}")]
+    AskamaError(#[from] askama::Error),
 }
 
 impl IntoResponse for AppError {
     fn into_response(self) -> Response {
         use AppError::{
-            Anyhow, Chrono, HeaderError, InternalError, MultipartError, NotFound,
+            Anyhow, AskamaError, HeaderError, InternalError, MultipartError, NotFound,
             RSpotifyClientError, RSpotifyIdError, Sqlx, StrumError, UrlParseError, Utf8Error,
         };
 
@@ -60,10 +60,6 @@ impl IntoResponse for AppError {
             }
             Sqlx(err) => {
                 warn!("sqlx: {}", err);
-                (StatusCode::INTERNAL_SERVER_ERROR).into_response()
-            }
-            Chrono(err) => {
-                warn!("chrono: {}", err);
                 (StatusCode::INTERNAL_SERVER_ERROR).into_response()
             }
             MultipartError(err) => {
@@ -92,6 +88,10 @@ impl IntoResponse for AppError {
             }
             HeaderError(err) => {
                 warn!("header error: {}", err);
+                (StatusCode::INTERNAL_SERVER_ERROR).into_response()
+            }
+            AskamaError(err) => {
+                warn!("askama error: {}", err);
                 (StatusCode::INTERNAL_SERVER_ERROR).into_response()
             }
         }

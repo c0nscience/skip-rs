@@ -1,10 +1,10 @@
 use std::str::FromStr;
 
 use askama::Template;
-use askama_axum::IntoResponse;
 use axum::{
     extract::{Path, State},
     http::HeaderMap,
+    response::{Html, IntoResponse},
 };
 use axum_extra::extract::Form;
 use serde::Deserialize;
@@ -26,10 +26,13 @@ pub async fn list(
 ) -> Result<impl IntoResponse, errors::AppError> {
     let category_type = CategoryType::from_str(&category)?;
     let categories = super::list_all_by_type(&state.db, &category_type).await?;
-    Ok(CategoriesTemplate {
-        category_type,
-        categories,
-    })
+    Ok(Html(
+        CategoriesTemplate {
+            category_type,
+            categories,
+        }
+        .render()?,
+    ))
 }
 
 #[derive(Template)]
@@ -42,7 +45,7 @@ pub async fn admin_list(
     State(state): State<states::AppState>,
 ) -> Result<impl IntoResponse, errors::AppError> {
     let categories = super::list_all(&state.db).await?;
-    Ok(ListTemplate { categories })
+    Ok(Html(ListTemplate { categories }.render()?))
 }
 
 #[derive(Template)]
@@ -50,7 +53,7 @@ pub async fn admin_list(
 struct CreateTemplate {}
 
 pub async fn admin_new() -> Result<impl IntoResponse, errors::AppError> {
-    Ok(CreateTemplate {})
+    Ok(Html(CreateTemplate {}.render()?))
 }
 
 #[derive(Deserialize)]
@@ -89,7 +92,7 @@ pub async fn admin_get_category(
     State(state): State<states::AppState>,
 ) -> Result<impl IntoResponse, errors::AppError> {
     let category = super::get(&state.db, &category_id).await?;
-    Ok(EditTemplate { category })
+    Ok(Html(EditTemplate { category }.render()?))
 }
 
 #[derive(Deserialize)]

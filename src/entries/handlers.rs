@@ -2,11 +2,11 @@ use std::str::FromStr;
 
 use anyhow::Result;
 use askama::Template;
-use askama_axum::IntoResponse;
 use axum::{
     Form,
     extract::{Path, State},
     http::HeaderMap,
+    response::{Html, IntoResponse},
 };
 use rspotify::{
     model::{AlbumId, Id, Image, PlaylistId},
@@ -41,11 +41,14 @@ pub async fn list(
 ) -> Result<impl IntoResponse, errors::AppError> {
     let category_type = CategoryType::from_str(&category)?;
     let entries = super::list_all_by_type(&_state.db, &category_id).await?;
-    Ok(EntriesTemplate {
-        category_id,
-        category_type,
-        entries,
-    })
+    Ok(Html(
+        EntriesTemplate {
+            category_id,
+            category_type,
+            entries,
+        }
+        .render()?,
+    ))
 }
 
 #[derive(Deserialize, Debug, PartialEq, Display)]
@@ -73,13 +76,16 @@ pub async fn get_entry(
     let category_type = CategoryType::from_str(&category)?;
     let entry = super::get(&state.db, &entry_id).await?;
     let rooms = state.ha_client.available_rooms().await?;
-    Ok(EntryTemplate {
-        category_id,
-        category_type,
-        entry_id,
-        image_url: entry.image_url,
-        rooms,
-    })
+    Ok(Html(
+        EntryTemplate {
+            category_id,
+            category_type,
+            entry_id,
+            image_url: entry.image_url,
+            rooms,
+        }
+        .render()?,
+    ))
 }
 
 #[derive(Template)]
@@ -92,7 +98,7 @@ pub async fn admin_list(
     State(state): State<states::AppState>,
 ) -> Result<impl IntoResponse, errors::AppError> {
     let categories = super::list_all(&state.db).await?;
-    Ok(ListTemplate { categories })
+    Ok(Html(ListTemplate { categories }.render()?))
 }
 
 struct CategoryEntryEditModel {
@@ -120,7 +126,7 @@ pub async fn admin_get_entry(
             name: c.name.clone(),
         })
         .collect();
-    Ok(EditTemplate { entry, categories })
+    Ok(Html(EditTemplate { entry, categories }.render()?))
 }
 
 #[serde_as]
@@ -203,7 +209,7 @@ fn find_image(images: Vec<Image>) -> Result<String> {
 struct CreateTemplate {}
 
 pub async fn admin_new() -> Result<impl IntoResponse, errors::AppError> {
-    Ok(CreateTemplate {})
+    Ok(Html(CreateTemplate {}.render()?))
 }
 
 pub async fn admin_create(

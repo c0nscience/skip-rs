@@ -1,22 +1,20 @@
 use anyhow::Context;
 use askama::Template;
 use axum::extract::{Path, State};
-use axum::response::Redirect;
+use axum::response::{Html, IntoResponse, Redirect};
 use rspotify::model::{AlbumId, Image, Market, PlaylistId};
 use rspotify::prelude::BaseClient;
 use rspotify::{ClientCredsSpotify, Credentials};
 use serde::Deserialize;
 use sqlx::postgres::PgPoolOptions;
-use tower_http::services::{ServeDir, ServeFile};
 
-use askama_axum::IntoResponse;
 use axum::http::{HeaderMap, StatusCode};
 use axum::routing::{get, post};
 use axum::{Form, Router};
+use tower_http::services::{ServeDir, ServeFile};
 use url::Url;
 
 use std::net::SocketAddr;
-use tower_http::compression::CompressionLayer;
 
 use tracing::info;
 
@@ -71,13 +69,13 @@ async fn main() -> anyhow::Result<()> {
     };
 
     let app = Router::new()
-        .route("/:category/categories", get(categories::handlers::list))
+        .route("/{category}/categories", get(categories::handlers::list))
         .route(
-            "/:category/categories/:category_id/entries",
+            "/{category}/categories/{category_id}/entries",
             get(entries::handlers::list),
         )
         .route(
-            "/:category/categories/:category_id/entries/:entry_id",
+            "/{category}/categories/{category_id}/entries/{entry_id}",
             get(entries::handlers::get_entry).post(play),
         )
         .route("/admin", get(admin_index))
@@ -87,7 +85,7 @@ async fn main() -> anyhow::Result<()> {
             get(categories::handlers::admin_new).post(categories::handlers::admin_create),
         )
         .route(
-            "/admin/categories/:category_id",
+            "/admin/categories/{category_id}",
             get(categories::handlers::admin_get_category)
                 .put(categories::handlers::admin_update)
                 .delete(categories::handlers::admin_delete),
@@ -98,7 +96,7 @@ async fn main() -> anyhow::Result<()> {
             get(entries::handlers::admin_new).post(entries::handlers::admin_create),
         )
         .route(
-            "/admin/entries/:entry_id",
+            "/admin/entries/{entry_id}",
             get(entries::handlers::admin_get_entry)
                 .put(entries::handlers::admin_update)
                 .delete(entries::handlers::admin_delete),
@@ -111,7 +109,6 @@ async fn main() -> anyhow::Result<()> {
         .route("/health", get(health))
         .nest_service("/favicon.ico", ServeFile::new("public/icons/favicon.ico"))
         .nest_service("/public", ServeDir::new("public"))
-        .layer(CompressionLayer::new())
         .with_state(state.clone());
 
     let addr = SocketAddr::from(([0, 0, 0, 0], port));
@@ -140,12 +137,15 @@ struct AdminIndexTemplate {
     play_count: u16,
 }
 
-async fn admin_index() -> impl IntoResponse {
-    AdminIndexTemplate {
-        category_count: 42,
-        entry_count: 21,
-        play_count: 9000,
-    }
+async fn admin_index() -> Result<impl IntoResponse, errors::AppError> {
+    Ok(Html(
+        AdminIndexTemplate {
+            category_count: 42,
+            entry_count: 21,
+            play_count: 9000,
+        }
+        .render()?,
+    ))
 }
 
 #[derive(Deserialize, Debug)]
@@ -210,7 +210,7 @@ pub async fn admin_image_selection(
         }
         _ => vec![],
     };
-    Ok(ImageSelectionTemplate { urls: image_urls })
+    Ok(Html(ImageSelectionTemplate { urls: image_urls }.render()?))
 }
 
 #[derive(Deserialize, Debug)]
