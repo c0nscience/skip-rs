@@ -26,6 +26,17 @@ pub mod errors;
 pub mod ha;
 pub mod states;
 
+// TODO:
+// - only show categories with at least one visible entry
+// - add 'visible' field to entries and categories
+// - only show entries and categories which are visible
+// - increase played counter on entries once an entry was started
+// - add search to kids side: it should filter enrties and show a suitable list of entries
+// - show play count in admin side
+// - show visibility status of entries and categories in admin view
+// - add ability to directly add an entry to a category in the category edit view
+// - add the novel feature again that the kids side automatically updates it self once an entry is added
+//  - maybe filter it on the 'client' side if only the current view is effected?
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     tracing_subscriber::fmt().init();

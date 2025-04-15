@@ -2,6 +2,7 @@
   "name": "RSKiP",
   "display": "fullscreen",
   "orientation": "portrait",
+  "start_url": "http://brpi.local:8081",
   "theme_color": "#101828",
   "background_color": "#101828",
   "icons": [
