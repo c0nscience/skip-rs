@@ -3,7 +3,7 @@ use axum::http::header::InvalidHeaderValue;
 use axum::response::{IntoResponse, Response};
 use axum_extra::extract::multipart;
 use thiserror::Error;
-use tracing::warn;
+use tracing::error;
 
 #[derive(Error, Debug)]
 pub enum AppError {
@@ -42,6 +42,9 @@ pub enum AppError {
 
     #[error("{0}")]
     AskamaError(#[from] askama::Error),
+
+    #[error("{0}")]
+    UuidError(#[from] sqlx::types::uuid::Error),
 }
 
 impl IntoResponse for AppError {
@@ -49,49 +52,54 @@ impl IntoResponse for AppError {
         use AppError::{
             Anyhow, AskamaError, HeaderError, InternalError, MultipartError, NotFound,
             RSpotifyClientError, RSpotifyIdError, Sqlx, StrumError, UrlParseError, Utf8Error,
+            UuidError,
         };
 
         match self {
             NotFound => (StatusCode::NOT_FOUND).into_response(),
             InternalError => (StatusCode::INTERNAL_SERVER_ERROR).into_response(),
             Anyhow(err) => {
-                warn!("anyhow: {}", err);
+                error!("anyhow: {}", err);
                 (StatusCode::INTERNAL_SERVER_ERROR).into_response()
             }
             Sqlx(err) => {
-                warn!("sqlx: {}", err);
+                error!("sqlx: {}", err);
                 (StatusCode::INTERNAL_SERVER_ERROR).into_response()
             }
             MultipartError(err) => {
-                warn!("multipart: {}", err);
+                error!("multipart: {}", err);
                 (StatusCode::INTERNAL_SERVER_ERROR).into_response()
             }
             Utf8Error(err) => {
-                warn!("utf8: {}", err);
+                error!("utf8: {}", err);
                 (StatusCode::INTERNAL_SERVER_ERROR).into_response()
             }
             StrumError(err) => {
-                warn!("strum: {}", err);
+                error!("strum: {}", err);
                 (StatusCode::INTERNAL_SERVER_ERROR).into_response()
             }
             RSpotifyIdError(err) => {
-                warn!("rspotify: {}", err);
+                error!("rspotify: {}", err);
                 (StatusCode::INTERNAL_SERVER_ERROR).into_response()
             }
             RSpotifyClientError(err) => {
-                warn!("rspotify: {}", err);
+                error!("rspotify: {}", err);
                 (StatusCode::INTERNAL_SERVER_ERROR).into_response()
             }
             UrlParseError(err) => {
-                warn!("url parser: {}", err);
+                error!("url parser: {}", err);
                 (StatusCode::INTERNAL_SERVER_ERROR).into_response()
             }
             HeaderError(err) => {
-                warn!("header error: {}", err);
+                error!("header error: {}", err);
                 (StatusCode::INTERNAL_SERVER_ERROR).into_response()
             }
             AskamaError(err) => {
-                warn!("askama error: {}", err);
+                error!("askama error: {}", err);
+                (StatusCode::INTERNAL_SERVER_ERROR).into_response()
+            }
+            UuidError(err) => {
+                error!("uuid error: {}", err);
                 (StatusCode::INTERNAL_SERVER_ERROR).into_response()
             }
         }

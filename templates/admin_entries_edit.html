@@ -92,11 +92,19 @@
 						</svg>
 					</div>
 				</div>
+				<div class="sm:col-span-full">
+					<label for="play_count" class="block text-sm/6 font-medium text-white">Play
+						Count</label>
+					<div class="mt-2">
+						<input type="number" min="0" name="play_count" id="play_count"
+							value="{{ entry.play_count }}"
+							class="block w-full rounded-md bg-white/5 px-3 py-1.5 text-base text-white outline-1 -outline-offset-1 outline-white/10 placeholder:text-gray-500 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-500 sm:text-sm/6">
+					</div>
+				</div>
 
 				<input type="hidden" name="spotify_uri" id="spotify_uri"
 					value="{{entry.spotify_uri}}" />
 				<input type="hidden" name="spotify_id" id="spotify_id" value="{{entry.spotify_id}}" />
-				<input type="hidden" name="play_count" id="play_count" value="{{entry.play_count}}" />
 				<input type="hidden" name="blob" id="blob" value="{{entry.blob}}" />
 			</div>
 
@@ -108,6 +116,8 @@
 	</div>
 
 	{% include "admin_image_selection.html" %}
+
+
 
 	<div class="grid max-w-7xl grid-cols-1 gap-x-8 gap-y-10 px-4 py-16 sm:px-6 md:grid-cols-3 lg:px-8">
 		<div>

@@ -9,7 +9,11 @@ use axum::{
 use axum_extra::extract::Form;
 use serde::Deserialize;
 
-use crate::{categories::CategoryType, errors, states};
+use crate::{
+    categories::CategoryType,
+    entries::{self, EntryListModel},
+    errors, states,
+};
 
 use super::Category;
 
@@ -86,13 +90,15 @@ pub async fn admin_create(
 #[template(path = "admin_categories_edit.html")]
 struct EditTemplate {
     category: Category,
+    entries: Vec<EntryListModel>,
 }
 pub async fn admin_get_category(
     Path(category_id): Path<String>,
     State(state): State<states::AppState>,
 ) -> Result<impl IntoResponse, errors::AppError> {
     let category = super::get(&state.db, &category_id).await?;
-    Ok(Html(EditTemplate { category }.render()?))
+    let entries = entries::list_all_by_category(&state.db, &category_id).await?;
+    Ok(Html(EditTemplate { category, entries }.render()?))
 }
 
 #[derive(Debug, Deserialize)]

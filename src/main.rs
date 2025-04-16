@@ -25,8 +25,6 @@ pub mod ha;
 pub mod states;
 
 // TODO:
-// - show play count in admin side
-// - add ability to directly add an entry to a category in the category edit view
 // - add search to kids side: it should filter enrties and show a suitable list of entries
 // - add the novel feature again that the kids side automatically updates it self once an entry is added
 //  - maybe filter it on the 'client' side if only the current view is effected?
@@ -85,6 +83,10 @@ async fn main() -> anyhow::Result<()> {
                 .put(categories::handlers::admin_update)
                 .delete(categories::handlers::admin_delete),
         )
+        .route(
+            "/admin/categories/{category_id}/entries",
+            post(entries::handlers::admin_create_for_category),
+        )
         .route("/admin/entries", get(entries::handlers::admin_list))
         .route(
             "/admin/entries/new",
@@ -138,11 +140,11 @@ async fn admin_index(
     let result = sqlx::query!(
         r#"
         SELECT
-            (SELECT COUNT(e.id) FROM entries AS e WHERE e.visible = TRUE) AS "visible_entries!",
-            (SELECT COUNT(e.id) FROM entries AS e WHERE e.visible = FALSE) AS "hidden_entries!",
-            (SELECT COUNT(c.id) FROM categories AS c WHERE c.visible = TRUE) AS "visible_categories!",
-            (SELECT COUNT(c.id) FROM categories AS c WHERE c.visible = FALSE) AS "hidden_categories!",
-            (SELECT SUM(play_count) FROM entries) AS "sum_playcount!"
+            COALESCE((SELECT COUNT(e.id) FROM entries AS e WHERE e.visible = TRUE), 0) AS "visible_entries!",
+            COALESCE((SELECT COUNT(e.id) FROM entries AS e WHERE e.visible = FALSE), 0) AS "hidden_entries!",
+            COALESCE((SELECT COUNT(c.id) FROM categories AS c WHERE c.visible = TRUE), 0) AS "visible_categories!",
+            COALESCE((SELECT COUNT(c.id) FROM categories AS c WHERE c.visible = FALSE), 0) AS "hidden_categories!",
+            COALESCE((SELECT SUM(play_count) FROM entries), 0) AS "sum_playcount!"
         "#
     )
     .fetch_one(&state.db)

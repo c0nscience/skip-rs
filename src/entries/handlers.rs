@@ -9,6 +9,7 @@ use axum::{
     response::{Html, IntoResponse},
 };
 use rspotify::{
+    ClientCredsSpotify,
     model::{AlbumId, Id, Image, PlaylistId},
     prelude::BaseClient,
 };
@@ -16,6 +17,7 @@ use serde::Deserialize;
 use serde_json::json;
 use serde_with::NoneAsEmptyString;
 use serde_with::serde_as;
+use sqlx::types::Uuid;
 use strum::Display;
 use url::Url;
 
@@ -40,7 +42,7 @@ pub async fn list(
     State(_state): State<states::AppState>,
 ) -> Result<impl IntoResponse, errors::AppError> {
     let category_type = CategoryType::from_str(&category)?;
-    let entries = super::list_all_by_category(&_state.db, &category_id).await?;
+    let entries = super::list_all_visible_by_category(&_state.db, &category_id).await?;
     Ok(Html(
         EntriesTemplate {
             category_id,
@@ -196,7 +198,7 @@ pub async fn admin_delete(
 
 #[derive(Deserialize, Debug)]
 pub struct CreateForm {
-    spotify_url: String,
+    spotify_urls: String,
 }
 
 fn find_image(images: Vec<Image>) -> Result<String> {
@@ -219,16 +221,45 @@ pub async fn admin_create(
     State(state): State<states::AppState>,
     Form(create_form): Form<CreateForm>,
 ) -> Result<impl IntoResponse, errors::AppError> {
-    let url = Url::parse(&create_form.spotify_url)?;
+    let urls: &Vec<Url> = &create_form
+        .spotify_urls
+        .split('\n')
+        .flat_map(|s| Url::parse(s))
+        .collect::<Vec<_>>();
+
+    let mut ids: Vec<Uuid> = vec![];
+    for url in urls {
+        let entry = create_entry_from_url(url, None, &state.spotify).await?;
+        let id = super::create(&state.db, entry).await?;
+        ids.push(id);
+    }
+
+    let mut headers = HeaderMap::new();
+    if ids.len() == 1 {
+        let id = ids.get(0).ok_or(anyhow::anyhow!("only id did not exist"))?;
+
+        let path = format!("/admin/entries/{}", id.to_string());
+        headers.insert("HX-Redirect", path.parse()?);
+    } else {
+        headers.insert("HX-Redirect", "/admin/entries".parse()?);
+    }
+    Ok(headers)
+}
+
+async fn create_entry_from_url(
+    url: &Url,
+    category_id: Option<sqlx::types::Uuid>,
+    spotify: &ClientCredsSpotify,
+) -> anyhow::Result<EntryCreateModel> {
     let segments = url
         .path_segments()
         .map(|c| c.collect::<Vec<_>>())
         .ok_or(anyhow::anyhow!("no path available"))?;
 
-    let maybe_entry: anyhow::Result<EntryCreateModel> = match segments[..] {
+    match segments[..] {
         ["album", id] => {
             let id = AlbumId::from_id(id)?;
-            let album = state.spotify.album(id, MARKET).await?;
+            let album = spotify.album(id, MARKET).await?;
             Ok(EntryCreateModel {
                 name: album.name.clone(),
                 image_url: find_image(album.images.clone())?,
@@ -237,11 +268,13 @@ pub async fn admin_create(
                 spotify_id: album.id.id().to_string(),
                 play_count: 0,
                 blob: json!(album),
+                visible: false,
+                category_id,
             })
         }
         ["playlist", id] => {
             let id = PlaylistId::from_id(id)?;
-            let playlist = state.spotify.playlist(id, None, MARKET).await?;
+            let playlist = spotify.playlist(id, None, MARKET).await?;
             Ok(EntryCreateModel {
                 name: playlist.name.clone(),
                 image_url: find_image(playlist.images.clone())?,
@@ -250,20 +283,39 @@ pub async fn admin_create(
                 spotify_id: playlist.id.id().to_string(),
                 play_count: 0,
                 blob: json!(playlist),
+                visible: false,
+                category_id,
             })
         }
         _ => Err(anyhow::anyhow!("url type not supporeted")),
-    };
+    }
+}
 
-    if let Ok(entry) = maybe_entry {
+#[derive(Template)]
+#[template(path = "admin_partial_entry_list.html")]
+struct PartialEntryList {
+    entries: Vec<EntryListModel>,
+}
+
+pub async fn admin_create_for_category(
+    Path(category_id): Path<String>,
+    State(state): State<states::AppState>,
+    Form(create_form): Form<CreateForm>,
+) -> Result<impl IntoResponse, errors::AppError> {
+    let category_id = sqlx::types::Uuid::parse_str(&category_id)?;
+    let urls: &Vec<Url> = &create_form
+        .spotify_urls
+        .split('\n')
+        .flat_map(|s| Url::parse(s))
+        .collect::<Vec<_>>();
+
+    let mut ids: Vec<Uuid> = vec![];
+    for url in urls {
+        let entry = create_entry_from_url(url, Some(category_id), &state.spotify).await?;
         let id = super::create(&state.db, entry).await?;
-        let mut headers = HeaderMap::new();
-        let path = format!("/admin/entries/{}", id.to_string());
-        headers.insert("HX-Redirect", path.parse()?);
-        return Ok(headers);
+        ids.push(id);
     }
 
-    let mut headers = HeaderMap::new();
-    headers.insert("HX-Redirect", "/admin/entries".parse()?);
-    Ok(headers)
+    let entries = super::list_all_by_category(&state.db, &category_id.to_string()).await?;
+    Ok(Html(PartialEntryList { entries }.render()?))
 }

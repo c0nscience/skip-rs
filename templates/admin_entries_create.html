@@ -12,11 +12,11 @@
 		<form class="md:col-span-2" hx-post="/admin/entries/new">
 			<div class="grid grid-cols-1 gap-x-6 gap-y-8 sm:max-w-xl sm:grid-cols-6">
 				<div class="sm:col-span-full">
-					<label for="image_url" class="block text-sm/6 font-medium text-white">Spotify
+					<label for="spotify_urls" class="block text-sm/6 font-medium text-white">Spotify
 						Url</label>
 					<div class="mt-2">
-						<input type="text" name="spotify_url" id="spotify_url"
-							class="block w-full rounded-md bg-white/5 px-3 py-1.5 text-base text-white outline-1 -outline-offset-1 outline-white/10 placeholder:text-gray-500 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-500 sm:text-sm/6">
+						<textarea name="spotify_urls" rows="10" id="spotify_urls"
+							class="block w-full rounded-md bg-white/5 px-3 py-1.5 text-base text-white outline-1 -outline-offset-1 outline-white/10 placeholder:text-gray-500 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-500 sm:text-sm/6"></textarea>
 					</div>
 				</div>
 			</div>

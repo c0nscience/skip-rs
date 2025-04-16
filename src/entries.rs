@@ -15,7 +15,7 @@ pub enum EntryType {
     Playlist,
 }
 
-async fn list_all_by_category(
+async fn list_all_visible_by_category(
     db: &PgPool,
     category_id: &str,
 ) -> anyhow::Result<Vec<EntryListModel>> {
@@ -37,6 +37,28 @@ async fn list_all_by_category(
     Ok(result)
 }
 
+pub async fn list_all_by_category(
+    db: &PgPool,
+    category_id: &str,
+) -> anyhow::Result<Vec<EntryListModel>> {
+    let id = sqlx::types::Uuid::parse_str(category_id)?;
+    let result = sqlx::query_as!(
+        EntryListModel,
+        r#"
+        SELECT 
+            id, name, image_url, visible, play_count as "play_count!"
+        FROM entries
+        WHERE category_id = $1
+        ORDER BY name
+        "#,
+        id
+    )
+    .fetch_all(db)
+    .await?;
+
+    Ok(result)
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 struct CategoryListModel {
     name: String,
@@ -44,18 +66,18 @@ struct CategoryListModel {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
-struct EntryListModel {
-    id: String,
-    name: String,
-    image_url: String,
-    visible: bool,
-    play_count: i16,
+pub struct EntryListModel {
+    pub id: String,
+    pub name: String,
+    pub image_url: String,
+    pub visible: bool,
+    pub play_count: i16,
 }
 
 async fn list_all(db: &PgPool) -> anyhow::Result<Vec<CategoryListModel>> {
     let result = sqlx::query!(
         r#"
-        SELECT e.id AS "entry_id", e.name AS "entry_name", e.image_url AS "entry_image_url", e.visible AS "entry_visible", e.play_count AS "entry_play_count!", c.id AS "category_id", c.name AS "catgegory_name"
+        SELECT e.id AS "entry_id", e.name AS "entry_name", e.image_url AS "entry_image_url", e.visible AS "entry_visible", e.play_count AS "entry_play_count!", c.id AS "category_id?", c.name AS "catgegory_name?"
         FROM entries AS e
         LEFT OUTER JOIN categories AS c ON e.category_id = c.id
         ORDER BY e.name
@@ -67,8 +89,8 @@ async fn list_all(db: &PgPool) -> anyhow::Result<Vec<CategoryListModel>> {
         .iter()
         .fold(
             HashMap::new(),
-            |mut acc, r| -> HashMap<String, CategoryListModel> {
-                match acc.get_mut(&r.category_id.to_string()) {
+            |mut acc, r| -> HashMap<Option<String>, CategoryListModel> {
+                match acc.get_mut(&r.category_id.map(|id| id.to_string())) {
                     Some(category) => category.entries.push(EntryListModel {
                         id: r.entry_id.to_string(),
                         name: r.entry_name.clone(),
@@ -78,9 +100,9 @@ async fn list_all(db: &PgPool) -> anyhow::Result<Vec<CategoryListModel>> {
                     }),
                     None => {
                         acc.insert(
-                            r.category_id.to_string(),
+                            r.category_id.map(|id| id.to_string()),
                             CategoryListModel {
-                                name: r.catgegory_name.clone(),
+                                name: r.catgegory_name.clone().unwrap_or_else(|| "".to_string()),
                                 entries: vec![EntryListModel {
                                     id: r.entry_id.to_string(),
                                     name: r.entry_name.clone(),
@@ -194,13 +216,15 @@ struct EntryCreateModel {
     spotify_id: String,
     play_count: i16,
     blob: serde_json::Value,
+    visible: bool,
+    category_id: Option<sqlx::types::Uuid>,
 }
 
 async fn create(db: &PgPool, entry: EntryCreateModel) -> anyhow::Result<Uuid> {
     let rec = sqlx::query!(
         r#"
-        INSERT INTO entries (name, image_url, entry_type, spotify_uri, spotify_id, play_count, blob)
-        VALUES ($1, $2, ($3::text)::entry_type, $4, $5, $6, $7)
+        INSERT INTO entries (name, image_url, entry_type, spotify_uri, spotify_id, play_count, blob, visible, category_id)
+        VALUES ($1, $2, ($3::text)::entry_type, $4, $5, $6, $7, $8, $9)
         RETURNING id
         "#,
         entry.name,
@@ -209,7 +233,9 @@ async fn create(db: &PgPool, entry: EntryCreateModel) -> anyhow::Result<Uuid> {
         entry.spotify_uri,
         entry.spotify_id,
         entry.play_count,
-        entry.blob
+        entry.blob,
+        entry.visible,
+        entry.category_id
     )
     .fetch_one(db)
     .await?;
