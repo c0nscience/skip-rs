@@ -1,0 +1,44 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT\n            (SELECT COUNT(e.id) FROM entries AS e WHERE e.visible = TRUE) AS \"visible_entries!\",\n            (SELECT COUNT(e.id) FROM entries AS e WHERE e.visible = FALSE) AS \"hidden_entries!\",\n            (SELECT COUNT(c.id) FROM categories AS c WHERE c.visible = TRUE) AS \"visible_categories!\",\n            (SELECT COUNT(c.id) FROM categories AS c WHERE c.visible = FALSE) AS \"hidden_categories!\",\n            (SELECT SUM(play_count) FROM entries) AS \"sum_playcount!\"\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "visible_entries!",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 1,
+        "name": "hidden_entries!",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 2,
+        "name": "visible_categories!",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 3,
+        "name": "hidden_categories!",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 4,
+        "name": "sum_playcount!",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      null,
+      null,
+      null,
+      null,
+      null
+    ]
+  },
+  "hash": "4925ed13fd00b90bd7e8086be33e19ca4c5e5fd95dfaec101da098ea0a58439c"
+}

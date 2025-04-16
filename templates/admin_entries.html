@@ -50,6 +50,9 @@
 				<a href="/admin/entries/{{ entry.id }}" class="absolute inset-0 focus:outline-hidden">
 				</a>
 			</div>
+			<div class="px-2 py-3 truncate text-xs font-normal md:text-sm md:font-medium text-gray-500">
+				Played: {{entry.play_count}}
+			</div>
 		</li>
 		{% endfor %}
 

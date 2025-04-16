@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        UPDATE entries\n        SET\n            play_count = play_count + 1\n        WHERE id = $1\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "df5037b6e11ccc39dbdf731f4e0f8d0c5bc6628e1afe6c35143d12fed6f4841b"
+}

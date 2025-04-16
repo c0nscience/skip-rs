@@ -25,15 +25,9 @@ pub mod ha;
 pub mod states;
 
 // TODO:
-// - increase played counter on entries once an entry was started
-// - add 'visible' field to entries and categories
 // - show play count in admin side
-// - only show categories with at least one visible entry
-// - only show entries and categories which are visible
-// - be able to add entries directly in the category view
-// - add search to kids side: it should filter enrties and show a suitable list of entries
-// - show visibility status of entries and categories in admin view
 // - add ability to directly add an entry to a category in the category edit view
+// - add search to kids side: it should filter enrties and show a suitable list of entries
 // - add the novel feature again that the kids side automatically updates it self once an entry is added
 //  - maybe filter it on the 'client' side if only the current view is effected?
 #[tokio::main]
@@ -133,17 +127,32 @@ async fn health() -> (StatusCode, impl IntoResponse) {
 #[derive(Template)]
 #[template(path = "admin.html")]
 struct AdminIndexTemplate {
-    category_count: u16,
-    entry_count: u16,
-    play_count: u16,
+    category_count: (i64, i64),
+    entry_count: (i64, i64),
+    play_count: i64,
 }
 
-async fn admin_index() -> Result<impl IntoResponse, errors::AppError> {
+async fn admin_index(
+    State(state): State<states::AppState>,
+) -> Result<impl IntoResponse, errors::AppError> {
+    let result = sqlx::query!(
+        r#"
+        SELECT
+            (SELECT COUNT(e.id) FROM entries AS e WHERE e.visible = TRUE) AS "visible_entries!",
+            (SELECT COUNT(e.id) FROM entries AS e WHERE e.visible = FALSE) AS "hidden_entries!",
+            (SELECT COUNT(c.id) FROM categories AS c WHERE c.visible = TRUE) AS "visible_categories!",
+            (SELECT COUNT(c.id) FROM categories AS c WHERE c.visible = FALSE) AS "hidden_categories!",
+            (SELECT SUM(play_count) FROM entries) AS "sum_playcount!"
+        "#
+    )
+    .fetch_one(&state.db)
+    .await?;
+
     Ok(Html(
         AdminIndexTemplate {
-            category_count: 42,
-            entry_count: 21,
-            play_count: 9000,
+            entry_count: (result.visible_entries, result.hidden_entries),
+            category_count: (result.visible_categories, result.hidden_categories),
+            play_count: result.sum_playcount,
         }
         .render()?,
     ))
@@ -229,6 +238,7 @@ pub async fn play(
         .play(&room_selection_form.room, &entry.spotify_uri)
         .await?;
 
+    entries::increment_play_count(&state.db, &entry_id).await?;
     info!("started {} in {}", &entry.name, &room_selection_form.room);
     let mut headers = HeaderMap::new();
     let path = format!("/{}/categories/{}/entries", category, category_id);

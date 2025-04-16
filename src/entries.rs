@@ -24,7 +24,7 @@ async fn list_all_by_category(
         EntryListModel,
         r#"
         SELECT 
-            id, name, image_url, visible
+            id, name, image_url, visible, play_count as "play_count!"
         FROM entries
         WHERE category_id = $1 AND visible = TRUE
         ORDER BY name
@@ -49,12 +49,13 @@ struct EntryListModel {
     name: String,
     image_url: String,
     visible: bool,
+    play_count: i16,
 }
 
 async fn list_all(db: &PgPool) -> anyhow::Result<Vec<CategoryListModel>> {
     let result = sqlx::query!(
         r#"
-        SELECT e.id AS "entry_id", e.name AS "entry_name", e.image_url AS "entry_image_url", e.visible AS "entry_visible", c.id AS "category_id", c.name AS "catgegory_name"
+        SELECT e.id AS "entry_id", e.name AS "entry_name", e.image_url AS "entry_image_url", e.visible AS "entry_visible", e.play_count AS "entry_play_count!", c.id AS "category_id", c.name AS "catgegory_name"
         FROM entries AS e
         LEFT OUTER JOIN categories AS c ON e.category_id = c.id
         ORDER BY e.name
@@ -73,6 +74,7 @@ async fn list_all(db: &PgPool) -> anyhow::Result<Vec<CategoryListModel>> {
                         name: r.entry_name.clone(),
                         image_url: r.entry_image_url.clone(),
                         visible: r.entry_visible,
+                        play_count: r.entry_play_count,
                     }),
                     None => {
                         acc.insert(
@@ -84,6 +86,7 @@ async fn list_all(db: &PgPool) -> anyhow::Result<Vec<CategoryListModel>> {
                                     name: r.entry_name.clone(),
                                     image_url: r.entry_image_url.clone(),
                                     visible: r.entry_visible,
+                                    play_count: r.entry_play_count,
                                 }],
                             },
                         );
@@ -211,4 +214,21 @@ async fn create(db: &PgPool, entry: EntryCreateModel) -> anyhow::Result<Uuid> {
     .fetch_one(db)
     .await?;
     Ok(rec.id)
+}
+
+pub async fn increment_play_count(db: &PgPool, entry_id: &str) -> anyhow::Result<()> {
+    let id = sqlx::types::Uuid::parse_str(entry_id)?;
+    sqlx::query!(
+        r#"
+        UPDATE entries
+        SET
+            play_count = play_count + 1
+        WHERE id = $1
+        "#,
+        id
+    )
+    .execute(db)
+    .await?;
+
+    Ok(())
 }

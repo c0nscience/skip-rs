@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        SELECT \n            id, name, image_url, visible\n        FROM entries\n        WHERE category_id = $1 AND visible = TRUE\n        ORDER BY name\n        ",
+  "query": "\n        SELECT \n            id, name, image_url, visible, play_count as \"play_count!\"\n        FROM entries\n        WHERE category_id = $1 AND visible = TRUE\n        ORDER BY name\n        ",
   "describe": {
     "columns": [
       {
@@ -22,6 +22,11 @@
         "ordinal": 3,
         "name": "visible",
         "type_info": "Bool"
+      },
+      {
+        "ordinal": 4,
+        "name": "play_count!",
+        "type_info": "Int2"
       }
     ],
     "parameters": {
@@ -33,8 +38,9 @@
       false,
       false,
       false,
-      false
+      false,
+      true
     ]
   },
-  "hash": "288c1fac0e4977d7b6c7d20459d1a3fb0ac4f0b0ac1a5029122289b1de024727"
+  "hash": "201a6a66d97ac9fb2cd5a4493aaf5db5457ac73ce7b395c7eacad3d24490ff5d"
 }
