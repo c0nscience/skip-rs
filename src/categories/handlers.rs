@@ -95,12 +95,14 @@ pub async fn admin_get_category(
     Ok(Html(EditTemplate { category }.render()?))
 }
 
-#[derive(Deserialize)]
+#[derive(Debug, Deserialize)]
 pub struct CategoryEditForm {
     id: String,
     name: String,
     image_url: String,
     category_type: String,
+    #[serde(default)]
+    visible: bool,
 }
 
 impl TryInto<Category> for CategoryEditForm {
@@ -113,6 +115,7 @@ impl TryInto<Category> for CategoryEditForm {
             name: self.name,
             image_url: self.image_url,
             category_type: CategoryType::from_str(&self.category_type)?,
+            visible: self.visible,
         })
     }
 }

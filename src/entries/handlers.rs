@@ -40,7 +40,7 @@ pub async fn list(
     State(_state): State<states::AppState>,
 ) -> Result<impl IntoResponse, errors::AppError> {
     let category_type = CategoryType::from_str(&category)?;
-    let entries = super::list_all_by_type(&_state.db, &category_id).await?;
+    let entries = super::list_all_by_category(&_state.db, &category_id).await?;
     Ok(Html(
         EntriesTemplate {
             category_id,
@@ -143,6 +143,8 @@ pub struct EntryEditForm {
 
     #[serde_as(as = "NoneAsEmptyString")]
     category_id: Option<String>,
+    #[serde(default)]
+    visible: bool,
 }
 
 impl TryInto<EntryEditModel> for EntryEditForm {
@@ -165,6 +167,7 @@ impl TryInto<EntryEditModel> for EntryEditForm {
             play_count: self.play_count,
             blob: self.blob,
             category_id,
+            visible: self.visible,
         })
     }
 }

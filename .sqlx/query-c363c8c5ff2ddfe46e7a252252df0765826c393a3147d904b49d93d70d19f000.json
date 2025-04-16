@@ -1,0 +1,23 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        UPDATE entries\n        SET\n            name = $2,\n            image_url = $3,\n            entry_type = ($4::text)::entry_type,\n            spotify_uri = $5,\n            spotify_id = $6,\n            play_count = $7,\n            blob = $8,\n            category_id = $9,\n            visible = $10\n        WHERE id = $1\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Text",
+        "Text",
+        "Text",
+        "Text",
+        "Text",
+        "Int2",
+        "Json",
+        "Uuid",
+        "Bool"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "c363c8c5ff2ddfe46e7a252252df0765826c393a3147d904b49d93d70d19f000"
+}

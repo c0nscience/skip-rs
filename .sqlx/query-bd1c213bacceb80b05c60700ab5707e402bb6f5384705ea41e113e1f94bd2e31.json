@@ -1,0 +1,18 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        UPDATE categories\n        SET\n            name = $2, image_url = $3, category_type = ($4::text)::category_type, visible = $5\n        WHERE id = $1\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Text",
+        "Text",
+        "Text",
+        "Bool"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "bd1c213bacceb80b05c60700ab5707e402bb6f5384705ea41e113e1f94bd2e31"
+}

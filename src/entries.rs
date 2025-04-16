@@ -15,15 +15,18 @@ pub enum EntryType {
     Playlist,
 }
 
-async fn list_all_by_type(db: &PgPool, category_id: &str) -> anyhow::Result<Vec<EntryListModel>> {
+async fn list_all_by_category(
+    db: &PgPool,
+    category_id: &str,
+) -> anyhow::Result<Vec<EntryListModel>> {
     let id = sqlx::types::Uuid::parse_str(category_id)?;
     let result = sqlx::query_as!(
         EntryListModel,
         r#"
         SELECT 
-            id, name, image_url
+            id, name, image_url, visible
         FROM entries
-        WHERE category_id = $1
+        WHERE category_id = $1 AND visible = TRUE
         ORDER BY name
         "#,
         id
@@ -45,14 +48,15 @@ struct EntryListModel {
     id: String,
     name: String,
     image_url: String,
+    visible: bool,
 }
 
 async fn list_all(db: &PgPool) -> anyhow::Result<Vec<CategoryListModel>> {
     let result = sqlx::query!(
         r#"
-        SELECT e.id as "entry_id", e.name as "entry_name", e.image_url as "entry_image_url", c.id as "category_id", c.name as "catgegory_name"
-        FROM entries as e
-        LEFT OUTER JOIN categories as c ON e.category_id = c.id
+        SELECT e.id AS "entry_id", e.name AS "entry_name", e.image_url AS "entry_image_url", e.visible AS "entry_visible", c.id AS "category_id", c.name AS "catgegory_name"
+        FROM entries AS e
+        LEFT OUTER JOIN categories AS c ON e.category_id = c.id
         ORDER BY e.name
         "#)
         .fetch_all(db)
@@ -68,6 +72,7 @@ async fn list_all(db: &PgPool) -> anyhow::Result<Vec<CategoryListModel>> {
                         id: r.entry_id.to_string(),
                         name: r.entry_name.clone(),
                         image_url: r.entry_image_url.clone(),
+                        visible: r.entry_visible,
                     }),
                     None => {
                         acc.insert(
@@ -78,6 +83,7 @@ async fn list_all(db: &PgPool) -> anyhow::Result<Vec<CategoryListModel>> {
                                     id: r.entry_id.to_string(),
                                     name: r.entry_name.clone(),
                                     image_url: r.entry_image_url.clone(),
+                                    visible: r.entry_visible,
                                 }],
                             },
                         );
@@ -108,6 +114,7 @@ pub struct EntryEditModel {
     pub play_count: i16,
     pub blob: serde_json::Value,
     pub category_id: Option<sqlx::types::Uuid>,
+    pub visible: bool,
 }
 
 pub async fn get(db: &PgPool, entry_id: &str) -> anyhow::Result<EntryEditModel> {
@@ -115,7 +122,7 @@ pub async fn get(db: &PgPool, entry_id: &str) -> anyhow::Result<EntryEditModel> 
     let result = sqlx::query_as!(
         EntryEditModel,
         r#"
-        SELECT id, name, image_url, entry_type AS "entry_type!: EntryType", spotify_uri, spotify_id, play_count as "play_count!", blob, category_id
+        SELECT id, name, image_url, entry_type AS "entry_type!: EntryType", spotify_uri, spotify_id, play_count AS "play_count!", blob, category_id, visible
         FROM entries
         WHERE id = $1
         "#,
@@ -139,7 +146,8 @@ async fn update(db: &PgPool, entry: &EntryEditModel) -> anyhow::Result<()> {
             spotify_id = $6,
             play_count = $7,
             blob = $8,
-            category_id = $9
+            category_id = $9,
+            visible = $10
         WHERE id = $1
         "#,
         entry.id,
@@ -150,7 +158,8 @@ async fn update(db: &PgPool, entry: &EntryEditModel) -> anyhow::Result<()> {
         entry.spotify_id,
         entry.play_count,
         entry.blob,
-        entry.category_id
+        entry.category_id,
+        entry.visible
     )
     .execute(db)
     .await?;

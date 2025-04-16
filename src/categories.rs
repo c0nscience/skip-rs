@@ -19,6 +19,7 @@ pub struct Category {
     pub name: String,
     pub image_url: String,
     pub category_type: CategoryType,
+    pub visible: bool,
 }
 
 async fn list_all_by_type(
@@ -29,10 +30,15 @@ async fn list_all_by_type(
         Category,
         r#"
         SELECT 
-            id, name, image_url, category_type AS "category_type!: CategoryType" 
-        FROM categories
-        WHERE category_type = ($1::text)::category_type
-        ORDER BY name
+            c.id, c.name, c.image_url, c.category_type AS "category_type!: CategoryType", c.visible
+        FROM categories AS c
+        WHERE c.category_type = ($1::text)::category_type
+            AND c.visible = TRUE
+            AND (SELECT COUNT(e.id)
+                    FROM entries AS e
+                    WHERE e.visible = TRUE AND e.category_id = c.id
+                ) > 0
+        ORDER BY c.name
         "#,
         category_type.as_ref()
     )
@@ -47,7 +53,7 @@ pub async fn list_all(db: &PgPool) -> anyhow::Result<Vec<Category>> {
         Category,
         r#"
         SELECT 
-            id, name, image_url, category_type AS "category_type!: CategoryType" 
+            id, name, image_url, category_type AS "category_type!: CategoryType", visible
         FROM categories
         ORDER BY name
         "#,
@@ -64,7 +70,7 @@ async fn get(db: &PgPool, category_id: &str) -> anyhow::Result<Category> {
         Category,
         r#"
         SELECT 
-            id, name, image_url, category_type AS "category_type!: CategoryType" 
+            id, name, image_url, category_type AS "category_type!: CategoryType", visible
         FROM categories 
         WHERE id = $1
         "#,
@@ -96,13 +102,14 @@ async fn update(db: &PgPool, category: &Category) -> anyhow::Result<()> {
         r#"
         UPDATE categories
         SET
-            name = $2, image_url = $3, category_type = ($4::text)::category_type
+            name = $2, image_url = $3, category_type = ($4::text)::category_type, visible = $5
         WHERE id = $1
         "#,
         category.id,
         category.name,
         category.image_url,
         category.category_type.as_ref(),
+        category.visible
     )
     .execute(db)
     .await?;

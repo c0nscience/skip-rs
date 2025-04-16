@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        SELECT \n            id, name, image_url, category_type AS \"category_type!: CategoryType\" \n        FROM categories\n        WHERE category_type = ($1::text)::category_type\n        ORDER BY name\n        ",
+  "query": "\n        SELECT \n            id, name, image_url, category_type AS \"category_type!: CategoryType\", visible\n        FROM categories\n        ORDER BY name\n        ",
   "describe": {
     "columns": [
       {
@@ -32,19 +32,23 @@
             }
           }
         }
+      },
+      {
+        "ordinal": 4,
+        "name": "visible",
+        "type_info": "Bool"
       }
     ],
     "parameters": {
-      "Left": [
-        "Text"
-      ]
+      "Left": []
     },
     "nullable": [
+      false,
       false,
       false,
       false,
       false
     ]
   },
-  "hash": "1ec04398ae3bfbc547257e64a96b7bf0d99e79a19867a162687a62010e40dbf9"
+  "hash": "5a78f39bf83cbf1c5cde42ba496f981b8e44378d0125a734d70cac58e789db98"
 }

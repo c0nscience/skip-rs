@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        SELECT \n            id, name, image_url, category_type AS \"category_type!: CategoryType\" \n        FROM categories \n        WHERE id = $1\n        ",
+  "query": "\n        SELECT \n            c.id, c.name, c.image_url, c.category_type AS \"category_type!: CategoryType\", c.visible\n        FROM categories AS c\n        WHERE c.category_type = ($1::text)::category_type\n            AND c.visible = TRUE\n            AND (SELECT COUNT(e.id)\n                    FROM entries AS e\n                    WHERE e.visible = TRUE AND e.category_id = c.id\n                ) > 0\n        ORDER BY c.name\n        ",
   "describe": {
     "columns": [
       {
@@ -32,19 +32,25 @@
             }
           }
         }
+      },
+      {
+        "ordinal": 4,
+        "name": "visible",
+        "type_info": "Bool"
       }
     ],
     "parameters": {
       "Left": [
-        "Uuid"
+        "Text"
       ]
     },
     "nullable": [
       false,
       false,
       false,
+      false,
       false
     ]
   },
-  "hash": "084d86ab4a09e782cc4237a9988f599d6886443439ed1ee5f4ce88bd96af7819"
+  "hash": "2172c842e9f537428389eda3a420291e420a82c0b4df01c3b543c6dfd4723a1e"
 }

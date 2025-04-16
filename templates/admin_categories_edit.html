@@ -59,6 +59,16 @@
 						</svg>
 					</div>
 				</div>
+				<div class="sm:col-span-full">
+					<label for="visible"
+						class="block text-sm/6 font-medium text-white">Visible</label>
+					<div class="mt-2">
+						<input type="checkbox" name="visible" id="visible"
+							value="{{ category.visible }}" {% if category.visible %} checked
+							{% endif %} _="on change set my.value to my.checked"
+							class="block bg-white/5 px-3 py-1.5  outline-1 -outline-offset-1 outline-white/10 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-500">
+					</div>
+				</div>
 			</div>
 
 			<div class="mt-8 flex">

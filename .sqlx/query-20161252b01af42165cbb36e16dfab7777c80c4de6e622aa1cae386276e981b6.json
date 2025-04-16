@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        SELECT e.id as \"entry_id\", e.name as \"entry_name\", e.image_url as \"entry_image_url\", c.id as \"category_id\", c.name as \"catgegory_name\"\n        FROM entries as e\n        LEFT OUTER JOIN categories as c ON e.category_id = c.id\n        ORDER BY e.name\n        ",
+  "query": "\n        SELECT e.id AS \"entry_id\", e.name AS \"entry_name\", e.image_url AS \"entry_image_url\", e.visible AS \"entry_visible\", c.id AS \"category_id\", c.name AS \"catgegory_name\"\n        FROM entries AS e\n        LEFT OUTER JOIN categories AS c ON e.category_id = c.id\n        ORDER BY e.name\n        ",
   "describe": {
     "columns": [
       {
@@ -20,11 +20,16 @@
       },
       {
         "ordinal": 3,
+        "name": "entry_visible",
+        "type_info": "Bool"
+      },
+      {
+        "ordinal": 4,
         "name": "category_id",
         "type_info": "Uuid"
       },
       {
-        "ordinal": 4,
+        "ordinal": 5,
         "name": "catgegory_name",
         "type_info": "Text"
       }
@@ -37,8 +42,9 @@
       false,
       false,
       false,
+      false,
       false
     ]
   },
-  "hash": "d18f465275e5b266abed818ada253082603693c325fbeab7e8fcd98ccd8d5aef"
+  "hash": "20161252b01af42165cbb36e16dfab7777c80c4de6e622aa1cae386276e981b6"
 }

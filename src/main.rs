@@ -25,12 +25,13 @@ pub mod ha;
 pub mod states;
 
 // TODO:
-// - only show categories with at least one visible entry
-// - add 'visible' field to entries and categories
-// - only show entries and categories which are visible
 // - increase played counter on entries once an entry was started
-// - add search to kids side: it should filter enrties and show a suitable list of entries
+// - add 'visible' field to entries and categories
 // - show play count in admin side
+// - only show categories with at least one visible entry
+// - only show entries and categories which are visible
+// - be able to add entries directly in the category view
+// - add search to kids side: it should filter enrties and show a suitable list of entries
 // - show visibility status of entries and categories in admin view
 // - add ability to directly add an entry to a category in the category edit view
 // - add the novel feature again that the kids side automatically updates it self once an entry is added
