@@ -5,7 +5,7 @@ use strum::{AsRefStr, Display, EnumString};
 
 pub mod handlers;
 
-#[derive(Debug, sqlx::Type, AsRefStr, EnumString, PartialEq, Display)]
+#[derive(Debug, sqlx::Type, AsRefStr, EnumString, PartialEq, Display, Clone)]
 #[sqlx(type_name = "entry_type", rename_all = "lowercase")]
 pub enum EntryType {
     #[strum(serialize = "album")]
@@ -140,6 +140,7 @@ pub struct EntryEditModel {
     pub blob: serde_json::Value,
     pub category_id: Option<sqlx::types::Uuid>,
     pub visible: bool,
+    pub spotify_url: String,
 }
 
 pub async fn get(db: &PgPool, entry_id: &str) -> anyhow::Result<EntryEditModel> {
@@ -147,7 +148,7 @@ pub async fn get(db: &PgPool, entry_id: &str) -> anyhow::Result<EntryEditModel> 
     let result = sqlx::query_as!(
         EntryEditModel,
         r#"
-        SELECT id, name, image_url, entry_type AS "entry_type!: EntryType", spotify_uri, spotify_id, play_count AS "play_count!", blob, category_id, visible
+        SELECT id, name, image_url, entry_type AS "entry_type!: EntryType", spotify_uri, spotify_id, play_count AS "play_count!", blob, category_id, visible, spotify_url
         FROM entries
         WHERE id = $1
         "#,
@@ -207,24 +208,25 @@ async fn delete(db: &PgPool, entry_id: &str) -> anyhow::Result<()> {
     Ok(())
 }
 
-#[derive(Debug, PartialEq)]
-struct EntryCreateModel {
-    name: String,
-    image_url: String,
-    entry_type: EntryType,
-    spotify_uri: String,
-    spotify_id: String,
-    play_count: i16,
-    blob: serde_json::Value,
-    visible: bool,
-    category_id: Option<sqlx::types::Uuid>,
+#[derive(Debug, PartialEq, Clone)]
+pub struct EntryCreateModel {
+    pub name: String,
+    pub image_url: String,
+    pub entry_type: EntryType,
+    pub spotify_url: String,
+    pub spotify_uri: String,
+    pub spotify_id: String,
+    pub play_count: i16,
+    pub blob: serde_json::Value,
+    pub visible: bool,
+    pub category_id: Option<sqlx::types::Uuid>,
 }
 
-async fn create(db: &PgPool, entry: EntryCreateModel) -> anyhow::Result<Uuid> {
+pub async fn create(db: &PgPool, entry: EntryCreateModel) -> anyhow::Result<Uuid> {
     let rec = sqlx::query!(
         r#"
-        INSERT INTO entries (name, image_url, entry_type, spotify_uri, spotify_id, play_count, blob, visible, category_id)
-        VALUES ($1, $2, ($3::text)::entry_type, $4, $5, $6, $7, $8, $9)
+        INSERT INTO entries (name, image_url, entry_type, spotify_uri, spotify_id, play_count, blob, visible, category_id, spotify_url)
+        VALUES ($1, $2, ($3::text)::entry_type, $4, $5, $6, $7, $8, $9, $10)
         RETURNING id
         "#,
         entry.name,
@@ -235,7 +237,8 @@ async fn create(db: &PgPool, entry: EntryCreateModel) -> anyhow::Result<Uuid> {
         entry.play_count,
         entry.blob,
         entry.visible,
-        entry.category_id
+        entry.category_id,
+        entry.spotify_url
     )
     .fetch_one(db)
     .await?;

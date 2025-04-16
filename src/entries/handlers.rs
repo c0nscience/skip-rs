@@ -147,6 +147,7 @@ pub struct EntryEditForm {
     category_id: Option<String>,
     #[serde(default)]
     visible: bool,
+    spotify_url: String,
 }
 
 impl TryInto<EntryEditModel> for EntryEditForm {
@@ -170,6 +171,7 @@ impl TryInto<EntryEditModel> for EntryEditForm {
             blob: self.blob,
             category_id,
             visible: self.visible,
+            spotify_url: self.spotify_url,
         })
     }
 }
@@ -264,6 +266,7 @@ async fn create_entry_from_url(
                 name: album.name.clone(),
                 image_url: find_image(album.images.clone())?,
                 entry_type: EntryType::Album,
+                spotify_url: url.to_string(),
                 spotify_uri: album.id.uri(),
                 spotify_id: album.id.id().to_string(),
                 play_count: 0,
@@ -279,6 +282,7 @@ async fn create_entry_from_url(
                 name: playlist.name.clone(),
                 image_url: find_image(playlist.images.clone())?,
                 entry_type: EntryType::Playlist,
+                spotify_url: url.to_string(),
                 spotify_uri: playlist.id.uri(),
                 spotify_id: playlist.id.id().to_string(),
                 play_count: 0,

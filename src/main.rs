@@ -22,6 +22,7 @@ pub mod categories;
 pub mod entries;
 pub mod errors;
 pub mod ha;
+pub mod import;
 pub mod states;
 
 // TODO:
@@ -62,16 +63,20 @@ async fn main() -> anyhow::Result<()> {
     };
 
     let app = Router::new()
-        .route("/{category}/categories", get(categories::handlers::list))
         .route(
-            "/{category}/categories/{category_id}/entries",
+            "/app/{category}/categories",
+            get(categories::handlers::list),
+        )
+        .route(
+            "/app/{category}/categories/{category_id}/entries",
             get(entries::handlers::list),
         )
         .route(
-            "/{category}/categories/{category_id}/entries/{entry_id}",
+            "/app/{category}/categories/{category_id}/entries/{entry_id}",
             get(entries::handlers::get_entry).post(play),
         )
         .route("/admin", get(admin_index))
+        // .route("/admin/import", get(admin_import))
         .route("/admin/categories", get(categories::handlers::admin_list))
         .route(
             "/admin/categories/new",
@@ -101,7 +106,7 @@ async fn main() -> anyhow::Result<()> {
         .route("/admin/image-selection", post(admin_image_selection))
         .route(
             "/",
-            get(|| async { Redirect::permanent("/audiobook/categories") }),
+            get(|| async { Redirect::temporary("/app/audiobook/categories") }),
         )
         .route("/health", get(health))
         .nest_service("/favicon.ico", ServeFile::new("public/icons/favicon.ico"))
@@ -160,6 +165,12 @@ async fn admin_index(
     ))
 }
 
+async fn admin_import(
+    State(state): State<states::AppState>,
+) -> Result<impl IntoResponse, errors::AppError> {
+    import::import_all(&state.db, &state.spotify).await?;
+    Ok(())
+}
 #[derive(Deserialize, Debug)]
 pub struct ImageSelectionForm {
     spotify_url: String,
