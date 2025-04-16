@@ -1,7 +1,7 @@
 use anyhow::Context;
 use askama::Template;
 use axum::extract::{Path, State};
-use axum::response::{Html, IntoResponse, Redirect};
+use axum::response::{Html, IntoResponse};
 use rspotify::model::{AlbumId, Image, Market, PlaylistId};
 use rspotify::prelude::BaseClient;
 use rspotify::{ClientCredsSpotify, Credentials};
@@ -104,10 +104,7 @@ async fn main() -> anyhow::Result<()> {
                 .delete(entries::handlers::admin_delete),
         )
         .route("/admin/image-selection", post(admin_image_selection))
-        .route(
-            "/",
-            get(|| async { Redirect::temporary("/app/audiobook/categories") }),
-        )
+        .route("/app", get(index))
         .route("/health", get(health))
         .nest_service("/favicon.ico", ServeFile::new("public/icons/favicon.ico"))
         .nest_service("/public", ServeDir::new("public"))
@@ -129,6 +126,10 @@ async fn main() -> anyhow::Result<()> {
 
 async fn health() -> (StatusCode, impl IntoResponse) {
     (StatusCode::OK, "OK")
+}
+
+async fn index(state: State<states::AppState>) -> Result<impl IntoResponse, errors::AppError> {
+    return categories::handlers::list(Path(String::from("audiobook")), state).await;
 }
 
 #[derive(Template)]
@@ -165,12 +166,13 @@ async fn admin_index(
     ))
 }
 
-async fn admin_import(
-    State(state): State<states::AppState>,
-) -> Result<impl IntoResponse, errors::AppError> {
-    import::import_all(&state.db, &state.spotify).await?;
-    Ok(())
-}
+// async fn admin_import(
+//     State(state): State<states::AppState>,
+// ) -> Result<impl IntoResponse, errors::AppError> {
+//     import::import_all(&state.db, &state.spotify).await?;
+//     Ok(())
+// }
+
 #[derive(Deserialize, Debug)]
 pub struct ImageSelectionForm {
     spotify_url: String,
