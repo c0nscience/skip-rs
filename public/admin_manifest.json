@@ -1,8 +1,8 @@
 {
-  "name": "RSKiP",
-  "display": "fullscreen",
+  "name": "RSKiP Admin",
+  "display": "standalone",
   "orientation": "portrait",
-  "start_url": "http://brpi.local:8081/admin",
+  "start_url": "http://brpi.fritz.box:8081/admin",
   "theme_color": "#101828",
   "background_color": "#101828",
   "icons": [

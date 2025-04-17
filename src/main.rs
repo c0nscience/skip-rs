@@ -63,16 +63,13 @@ async fn main() -> anyhow::Result<()> {
     };
 
     let app = Router::new()
+        .route("/{category}/categories", get(categories::handlers::list))
         .route(
-            "/app/{category}/categories",
-            get(categories::handlers::list),
-        )
-        .route(
-            "/app/{category}/categories/{category_id}/entries",
+            "/{category}/categories/{category_id}/entries",
             get(entries::handlers::list),
         )
         .route(
-            "/app/{category}/categories/{category_id}/entries/{entry_id}",
+            "/{category}/categories/{category_id}/entries/{entry_id}",
             get(entries::handlers::get_entry).post(play),
         )
         .route("/admin", get(admin_index))
@@ -104,7 +101,7 @@ async fn main() -> anyhow::Result<()> {
                 .delete(entries::handlers::admin_delete),
         )
         .route("/admin/image-selection", post(admin_image_selection))
-        .route("/app", get(index))
+        .route("/", get(index))
         .route("/health", get(health))
         .nest_service("/favicon.ico", ServeFile::new("public/icons/favicon.ico"))
         .nest_service("/public", ServeDir::new("public"))

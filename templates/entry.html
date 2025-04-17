@@ -7,7 +7,7 @@
 {% endblock %}
 
 {% block content %}
-<form hx-post="/app/{{ category_type }}/categories/{{ category_id }}/entries/{{entry_id}}">
+<form hx-post="/{{ category_type }}/categories/{{ category_id }}/entries/{{entry_id}}">
 	<div class="p-8 grid grid-cols-4 gap-x-2 gap-y-10">
 		<div class="col-span-4 flex justify-center">
 			<img src="{{image_url}}" class="rounded-lg">

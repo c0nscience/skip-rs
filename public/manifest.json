@@ -1,8 +1,7 @@
 {
   "name": "RSKiP",
-  "display": "fullscreen",
+  "display": "standalone",
   "orientation": "portrait",
-  "start_url": "http://brpi.local:8081/app",
   "theme_color": "#101828",
   "background_color": "#101828",
   "icons": [
