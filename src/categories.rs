@@ -137,3 +137,52 @@ async fn create(
     .await?;
     Ok(rec.id)
 }
+
+pub async fn admin_search(db: &PgPool, query: &str) -> anyhow::Result<Vec<Category>> {
+    let query = format!("%{}%", query);
+    let result = sqlx::query_as!(
+        Category,
+        r#"
+        SELECT 
+            id, name, image_url, category_type AS "category_type!: CategoryType", visible
+        FROM categories
+        WHERE name like $1
+        ORDER BY name
+        "#,
+        query
+    )
+    .fetch_all(db)
+    .await?;
+
+    Ok(result)
+}
+
+pub async fn search(
+    db: &PgPool,
+    category_type: &CategoryType,
+    query: &str,
+) -> anyhow::Result<Vec<Category>> {
+    let query = format!("%{}%", query);
+    let result = sqlx::query_as!(
+        Category,
+        r#"
+        SELECT 
+            c.id, c.name, c.image_url, c.category_type AS "category_type!: CategoryType", c.visible
+        FROM categories AS c
+        WHERE c.category_type = ($1::text)::category_type
+            AND c.visible = TRUE
+            AND (SELECT COUNT(e.id)
+                    FROM entries AS e
+                    WHERE e.visible = TRUE AND e.category_id = c.id
+                ) > 0
+            AND c.name LIKE $2
+        ORDER BY c.name
+        "#,
+        category_type.as_ref(),
+        query
+    )
+    .fetch_all(db)
+    .await?;
+
+    Ok(result)
+}

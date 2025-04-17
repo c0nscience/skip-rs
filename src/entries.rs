@@ -60,9 +60,9 @@ pub async fn list_all_by_category(
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
-struct CategoryListModel {
-    name: String,
-    entries: Vec<EntryListModel>,
+pub struct CategoryListModel {
+    pub name: String,
+    pub entries: Vec<EntryListModel>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
@@ -260,4 +260,86 @@ pub async fn increment_play_count(db: &PgPool, entry_id: &str) -> anyhow::Result
     .await?;
 
     Ok(())
+}
+
+pub async fn admin_search(db: &PgPool, query: &str) -> anyhow::Result<Vec<CategoryListModel>> {
+    let query = format!("%{}%", query);
+    let result = sqlx::query!(
+        r#"
+        SELECT e.id AS "entry_id", e.name AS "entry_name", e.image_url AS "entry_image_url", e.visible AS "entry_visible", e.play_count AS "entry_play_count!", c.id AS "category_id?", c.name AS "catgegory_name?"
+        FROM entries AS e
+        LEFT OUTER JOIN categories AS c ON e.category_id = c.id
+        WHERE e.name LIKE $1
+        ORDER BY e.name
+        "#,
+        query)
+        .fetch_all(db)
+        .await?;
+
+    let mut categories: Vec<CategoryListModel> = result
+        .iter()
+        .fold(
+            HashMap::new(),
+            |mut acc, r| -> HashMap<Option<String>, CategoryListModel> {
+                match acc.get_mut(&r.category_id.map(|id| id.to_string())) {
+                    Some(category) => category.entries.push(EntryListModel {
+                        id: r.entry_id.to_string(),
+                        name: r.entry_name.clone(),
+                        image_url: r.entry_image_url.clone(),
+                        visible: r.entry_visible,
+                        play_count: r.entry_play_count,
+                    }),
+                    None => {
+                        acc.insert(
+                            r.category_id.map(|id| id.to_string()),
+                            CategoryListModel {
+                                name: r.catgegory_name.clone().unwrap_or_else(|| "".to_string()),
+                                entries: vec![EntryListModel {
+                                    id: r.entry_id.to_string(),
+                                    name: r.entry_name.clone(),
+                                    image_url: r.entry_image_url.clone(),
+                                    visible: r.entry_visible,
+                                    play_count: r.entry_play_count,
+                                }],
+                            },
+                        );
+                        ()
+                    }
+                };
+
+                acc
+            },
+        )
+        .values()
+        .cloned()
+        .collect();
+
+    categories.sort();
+
+    Ok(categories)
+}
+
+pub async fn search(
+    db: &PgPool,
+    category_id: &str,
+    query: &str,
+) -> anyhow::Result<Vec<EntryListModel>> {
+    let query = format!("%{}%", query);
+    let id = sqlx::types::Uuid::parse_str(category_id)?;
+    let result = sqlx::query_as!(
+        EntryListModel,
+        r#"
+        SELECT 
+            id, name, image_url, visible, play_count as "play_count!"
+        FROM entries
+        WHERE name LIKE $1 AND visible = TRUE AND category_id = $2
+        ORDER BY name
+        "#,
+        query,
+        id
+    )
+    .fetch_all(db)
+    .await?;
+
+    Ok(result)
 }

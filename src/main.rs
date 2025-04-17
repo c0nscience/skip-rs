@@ -1,7 +1,11 @@
-use anyhow::Context;
+use anyhow::{Context, anyhow};
 use askama::Template;
 use axum::extract::{Path, State};
 use axum::response::{Html, IntoResponse};
+use axum_extra::extract::Query;
+use categories::{Category, CategoryType};
+use entries::{CategoryListModel, EntryListModel};
+use errors::AppError;
 use rspotify::model::{AlbumId, Image, Market, PlaylistId};
 use rspotify::prelude::BaseClient;
 use rspotify::{ClientCredsSpotify, Credentials};
@@ -15,6 +19,7 @@ use tower_http::services::{ServeDir, ServeFile};
 use url::Url;
 
 use std::net::SocketAddr;
+use std::str::FromStr;
 
 use tracing::info;
 
@@ -26,9 +31,9 @@ pub mod import;
 pub mod states;
 
 // TODO:
-// - add search to kids side: it should filter enrties and show a suitable list of entries
 // - add the novel feature again that the kids side automatically updates it self once an entry is added
 //  - maybe filter it on the 'client' side if only the current view is effected?
+//  - I think I want to navigate the client to newly added entry
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     tracing_subscriber::fmt().init();
@@ -73,6 +78,7 @@ async fn main() -> anyhow::Result<()> {
             get(entries::handlers::get_entry).post(play),
         )
         .route("/admin", get(admin_index))
+        .route("/search", get(admin_search))
         // .route("/admin/import", get(admin_import))
         .route("/admin/categories", get(categories::handlers::admin_list))
         .route(
@@ -161,6 +167,115 @@ async fn admin_index(
         }
         .render()?,
     ))
+}
+
+#[derive(Debug, Deserialize)]
+struct Search {
+    query: String,
+}
+
+#[derive(Template)]
+#[template(path = "admin_entries.html", block = "admin_content")]
+struct AdminEntrySearchResultBlock {
+    categories: Vec<CategoryListModel>,
+}
+
+#[derive(Template)]
+#[template(path = "admin_categories.html", block = "admin_content")]
+struct AdminCategorySearchResultBlock {
+    categories: Vec<Category>,
+}
+
+#[derive(Template)]
+#[template(path = "categories.html", block = "list_content")]
+struct CategorySearchResultBlock {
+    category_type: CategoryType,
+    categories: Vec<Category>,
+}
+
+#[derive(Template)]
+#[template(path = "entries.html", block = "list_content")]
+struct EntrySearchResultBlock {
+    category_id: String,
+    category_type: CategoryType,
+    entries: Vec<EntryListModel>,
+}
+
+async fn admin_search(
+    search: Query<Search>,
+    headers: HeaderMap,
+    State(state): State<states::AppState>,
+) -> Result<impl IntoResponse, AppError> {
+    let value = headers
+        .get("hx-current-url")
+        .ok_or(anyhow!("no current url header present"))?;
+    let value = value.to_str()?;
+    let url = Url::parse(value)?;
+    let segments = url
+        .path_segments()
+        .map(|c| c.collect::<Vec<_>>())
+        .ok_or(anyhow!("no path segments on url"))?;
+
+    return match segments[..] {
+        ["admin", "entries"] => {
+            info!("search for admin entries");
+            let categories = entries::admin_search(&state.db, &search.query).await?;
+            Ok(Html(AdminEntrySearchResultBlock { categories }.render()?))
+        }
+        ["admin", "categories"] => {
+            info!("search for admin categories");
+            let categories = categories::admin_search(&state.db, &search.query).await?;
+            Ok(Html(
+                AdminCategorySearchResultBlock { categories }.render()?,
+            ))
+        }
+        [""] | ["audiobook", "categories"] => {
+            info!("search from index and for audiobook categories");
+            let categories = categories::search(
+                &state.db,
+                &categories::CategoryType::Audiobook,
+                &search.query,
+            )
+            .await?;
+            Ok(Html(
+                CategorySearchResultBlock {
+                    category_type: CategoryType::Audiobook,
+                    categories,
+                }
+                .render()?,
+            ))
+        }
+        ["music", "categories"] => {
+            info!("search music categories");
+            let categories =
+                categories::search(&state.db, &categories::CategoryType::Music, &search.query)
+                    .await?;
+            Ok(Html(
+                CategorySearchResultBlock {
+                    category_type: CategoryType::Music,
+                    categories,
+                }
+                .render()?,
+            ))
+        }
+        [category_type, "categories", category_id, "entries"] => {
+            info!(
+                "search search for entries in {} for {}",
+                category_type, category_id
+            );
+            let category_type = CategoryType::from_str(category_type)?;
+            let entries = entries::search(&state.db, category_id, &search.query).await?;
+            Ok(Html(
+                EntrySearchResultBlock {
+                    category_type,
+                    category_id: category_id.to_string(),
+                    entries,
+                }
+                .render()?,
+            ))
+        }
+        _ => Err(AppError::Anyhow(anyhow!("search not supported"))),
+    };
 }
 
 // async fn admin_import(

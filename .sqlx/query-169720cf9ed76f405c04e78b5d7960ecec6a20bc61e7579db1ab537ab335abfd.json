@@ -1,0 +1,57 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT \n            c.id, c.name, c.image_url, c.category_type AS \"category_type!: CategoryType\", c.visible\n        FROM categories AS c\n        WHERE c.category_type = ($1::text)::category_type\n            AND c.visible = TRUE\n            AND (SELECT COUNT(e.id)\n                    FROM entries AS e\n                    WHERE e.visible = TRUE AND e.category_id = c.id\n                ) > 0\n            AND c.name LIKE $2\n        ORDER BY c.name\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "name",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 2,
+        "name": "image_url",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 3,
+        "name": "category_type!: CategoryType",
+        "type_info": {
+          "Custom": {
+            "name": "category_type",
+            "kind": {
+              "Enum": [
+                "music",
+                "audiobook"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "visible",
+        "type_info": "Bool"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Text"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "169720cf9ed76f405c04e78b5d7960ecec6a20bc61e7579db1ab537ab335abfd"
+}

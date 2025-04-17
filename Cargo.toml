@@ -7,7 +7,7 @@ edition = "2024"
 anyhow = { version = "1.0.95", default-features = false }
 askama = { version = "0.13.1", features = ["alloc", "derive"], default-features = false }
 axum = { version = "0.8.3", features = ["form", "http1", "tokio"], default-features = false }
-axum-extra = { version = "0.10.1", features = ["form", "multipart"], default-features = false }
+axum-extra = { version = "0.10.1", features = ["form", "query", "tracing"], default-features = false }
 dotenvy = "0.15.7"
 reqwest = { version = "0.12", features = ["default-tls"], default-features = false }
 rspotify = { version = "0.14.0", features = ["client-reqwest"], default-features = false }

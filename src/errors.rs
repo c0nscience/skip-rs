@@ -1,7 +1,6 @@
 use axum::http::StatusCode;
 use axum::http::header::InvalidHeaderValue;
 use axum::response::{IntoResponse, Response};
-use axum_extra::extract::multipart;
 use thiserror::Error;
 use tracing::error;
 
@@ -12,9 +11,6 @@ pub enum AppError {
 
     #[error("internal server error")]
     InternalError,
-
-    #[error("{0}")]
-    MultipartError(#[from] multipart::MultipartError),
 
     #[error("{0}")]
     Sqlx(#[from] sqlx::Error),
@@ -45,14 +41,16 @@ pub enum AppError {
 
     #[error("{0}")]
     UuidError(#[from] sqlx::types::uuid::Error),
+
+    #[error("{0}")]
+    ToStrError(#[from] reqwest::header::ToStrError),
 }
 
 impl IntoResponse for AppError {
     fn into_response(self) -> Response {
         use AppError::{
-            Anyhow, AskamaError, HeaderError, InternalError, MultipartError, NotFound,
-            RSpotifyClientError, RSpotifyIdError, Sqlx, StrumError, UrlParseError, Utf8Error,
-            UuidError,
+            Anyhow, AskamaError, HeaderError, InternalError, NotFound, RSpotifyClientError,
+            RSpotifyIdError, Sqlx, StrumError, ToStrError, UrlParseError, Utf8Error, UuidError,
         };
 
         match self {
@@ -64,10 +62,6 @@ impl IntoResponse for AppError {
             }
             Sqlx(err) => {
                 error!("sqlx: {}", err);
-                (StatusCode::INTERNAL_SERVER_ERROR).into_response()
-            }
-            MultipartError(err) => {
-                error!("multipart: {}", err);
                 (StatusCode::INTERNAL_SERVER_ERROR).into_response()
             }
             Utf8Error(err) => {
@@ -100,6 +94,10 @@ impl IntoResponse for AppError {
             }
             UuidError(err) => {
                 error!("uuid error: {}", err);
+                (StatusCode::INTERNAL_SERVER_ERROR).into_response()
+            }
+            ToStrError(err) => {
+                error!("to str error: {}", err);
                 (StatusCode::INTERNAL_SERVER_ERROR).into_response()
             }
         }

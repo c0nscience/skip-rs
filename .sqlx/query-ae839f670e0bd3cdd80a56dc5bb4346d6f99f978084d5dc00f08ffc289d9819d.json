@@ -1,0 +1,58 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT e.id AS \"entry_id\", e.name AS \"entry_name\", e.image_url AS \"entry_image_url\", e.visible AS \"entry_visible\", e.play_count AS \"entry_play_count!\", c.id AS \"category_id?\", c.name AS \"catgegory_name?\"\n        FROM entries AS e\n        LEFT OUTER JOIN categories AS c ON e.category_id = c.id\n        WHERE e.name LIKE $1\n        ORDER BY e.name\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "entry_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "entry_name",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 2,
+        "name": "entry_image_url",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 3,
+        "name": "entry_visible",
+        "type_info": "Bool"
+      },
+      {
+        "ordinal": 4,
+        "name": "entry_play_count!",
+        "type_info": "Int2"
+      },
+      {
+        "ordinal": 5,
+        "name": "category_id?",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 6,
+        "name": "catgegory_name?",
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      true,
+      false,
+      false
+    ]
+  },
+  "hash": "ae839f670e0bd3cdd80a56dc5bb4346d6f99f978084d5dc00f08ffc289d9819d"
+}
